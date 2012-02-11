@@ -1,0 +1,10 @@
+@author CA Meijer <hammingweight@gmail.com>
+@copyright 2012 CA Meijer
+@version 0.1.5
+@title Mongrel documentation
+
+@doc
+== Introduction ==
+
+Mongrel is a library for converting between the JSON document encapsulation used by the mongoexport tool and the tuple encapsulation of a document used by the official MongoDB driver.
+
