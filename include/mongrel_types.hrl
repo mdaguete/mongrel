@@ -10,5 +10,8 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--define(binary(X), {bin, bin, X}).
+-define(binary(X), mongrel_types:binary(X)).
 
+-define(uuid(X), mongrel_types:uuid(X)).
+
+-define(md5(X), mongrel_types:md5(X)).

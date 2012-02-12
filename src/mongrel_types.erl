@@ -20,15 +20,21 @@
 %%
 %% Exported Functions
 %%
--export([binary/1]).
+-export([binary/1,
+		 uuid/1,
+		 md5/1]).
 
 %%
 %% API Functions
 %%
 binary(X) when is_binary(X) ->
-	?binary(X).
+	{bin, bin, X}.
 
+uuid(X) when is_binary(X) ->
+	{bin, uuid, X}.
 
+md5(X) when is_binary(X) ->
+	{bin, md5, X}.
 
 %%
 %% Local Functions
