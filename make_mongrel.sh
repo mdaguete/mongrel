@@ -7,6 +7,7 @@ mkdir $BUILD_NAME/doc
 mkdir $BUILD_NAME/ebin
 mkdir $BUILD_NAME/tbin
 erlc -I include -o $BUILD_NAME/ebin src/*.erl
+cp src/*.app $BUILD_NAME/ebin
 erlc -I include -o $BUILD_NAME/tbin test/*.erl
 erl -noshell -pa $BUILD_NAME/ebin -pa $BUILD_NAME/tbin -s test_all test $BUILD_NAME/tbin -s init stop
 rm -r $BUILD_NAME/tbin
