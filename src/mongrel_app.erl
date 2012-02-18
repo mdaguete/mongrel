@@ -41,8 +41,8 @@
 %%          {ok, Pid, State} |
 %%          {error, Reason}
 %% --------------------------------------------------------------------
-start(_Type, _StartArgs) ->
-	{ok, self()}.
+start(_Type, StartArgs) ->
+	gen_server:start_link({local, mongrel}, mongrel, StartArgs, []).
 
 %% --------------------------------------------------------------------
 %% Func: stop/1
