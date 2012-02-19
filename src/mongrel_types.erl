@@ -15,7 +15,7 @@
 %%
 %% Include files
 %%
--include("mongrel_types.hrl").
+
 
 %%
 %% Exported Functions

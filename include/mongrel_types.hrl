@@ -15,3 +15,5 @@
 -define(uuid(X), mongrel_types:uuid(X)).
 
 -define(md5(X), mongrel_types:md5(X)).
+
+-define(to_map(Record), {Record, record_info(fields, Record)}).
