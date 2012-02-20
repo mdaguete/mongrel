@@ -41,8 +41,9 @@
 %%          {ok, Pid, State} |
 %%          {error, Reason}
 %% --------------------------------------------------------------------
-start(_Type, StartArgs) ->
-	gen_server:start_link({local, mongrel}, mongrel, StartArgs, []).
+start(_Type, _StartArgs) ->
+	TableId = ets:new(mongrel_table, [public]),
+	supervisor:start_link({local, mongrel_sup}, mongrel_sup, [TableId]).
 
 %% --------------------------------------------------------------------
 %% Func: stop/1

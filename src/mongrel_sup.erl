@@ -55,10 +55,10 @@
 %%          ignore                          |
 %%          {error, Reason}
 %% --------------------------------------------------------------------
-init([]) ->
-    Child = {mongrel, {mongrel, start_link, []},
+init([TableId]) ->
+    Child = {mongrel, {mongrel, start_link, [TableId]},
 	      permanent, 2000, worker, [mongrel]},
-    {ok, {{one_for_all,0,1}, [Child]}}.
+    {ok, {{one_for_one, 4, 3600}, [Child]}}.
 
 %% ====================================================================
 %% Internal functions

@@ -24,7 +24,7 @@
 
 %% --------------------------------------------------------------------
 %% External exports
--export([insert/1, lookup/1]).
+-export([start_link/1, insert/1, lookup/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -45,8 +45,7 @@
 %% Description: Initiates the server
 %% Returns: {ok, State}          |
 %% --------------------------------------------------------------------
-init([]) ->
-	TableId = ets:new(mongrel_ets, [private]),
+init(TableId) ->
     {ok, #state{ets_id = TableId}}.
 
 %% --------------------------------------------------------------------
@@ -63,10 +62,7 @@ handle_call({lookup, Key}, _From, State) ->
 			{reply, Value, State};
 		[] ->
 			{reply, {error, key_not_found, Key}, State}
-	end;
-handle_call(Request, _From, State) ->
-	{reply, {error, bad_request, Request}, State}.
-	
+	end.	
 
 %% --------------------------------------------------------------------
 %% Function: handle_cast/2
@@ -108,3 +104,6 @@ insert(KeyValuePair) ->
 
 lookup(Key) ->
 	gen_server:call(mongrel, {lookup, Key}, infinity).
+
+start_link(StartArgs) ->
+	gen_server:start_link({local, mongrel}, mongrel, StartArgs, []).
