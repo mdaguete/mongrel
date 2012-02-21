@@ -53,8 +53,6 @@ start_link(TableId) ->
 %% --------------------------------------------------------------------
 %% Func: init/1
 %% Returns: {ok,  {SupFlags,  [ChildSpec]}} |
-%%          ignore                          |
-%%          {error, Reason}
 %% --------------------------------------------------------------------
 init([TableId]) ->
     Server = {mongrel, {mongrel, start_link, [TableId]},

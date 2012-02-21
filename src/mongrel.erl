@@ -96,9 +96,6 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-%% --------------------------------------------------------------------
-%%% Internal functions
-%% --------------------------------------------------------------------
 insert(KeyValuePair) ->
 	gen_server:call(mongrel, {insert, KeyValuePair}, infinity).
 
@@ -107,3 +104,7 @@ lookup(Key) ->
 
 start_link(StartArgs) ->
 	gen_server:start_link({local, mongrel}, mongrel, StartArgs, []).
+
+%% --------------------------------------------------------------------
+%%% Internal functions
+%% --------------------------------------------------------------------
