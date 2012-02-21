@@ -24,7 +24,7 @@
 %% --------------------------------------------------------------------
 %% External exports
 %% --------------------------------------------------------------------
--export([]).
+-export([start_link/1]).
 
 %% --------------------------------------------------------------------
 %% Internal exports
@@ -43,7 +43,8 @@
 %% ====================================================================
 %% External functions
 %% ====================================================================
-
+start_link(TableId) ->
+	supervisor:start_link({local, ?MODULE}, ?MODULE, [TableId]).
 
 
 %% ====================================================================
@@ -56,9 +57,10 @@
 %%          {error, Reason}
 %% --------------------------------------------------------------------
 init([TableId]) ->
-    Child = {mongrel, {mongrel, start_link, [TableId]},
+    Server = {mongrel, {mongrel, start_link, [TableId]},
 	      permanent, 2000, worker, [mongrel]},
-    {ok, {{one_for_one, 4, 3600}, [Child]}}.
+	RestartStrategy = {one_for_one, 4, 3600}, 
+    {ok, {RestartStrategy, [Server]}}.
 
 %% ====================================================================
 %% Internal functions

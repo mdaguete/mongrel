@@ -43,7 +43,7 @@
 %% --------------------------------------------------------------------
 start(_Type, _StartArgs) ->
 	TableId = ets:new(mongrel_table, [public]),
-	supervisor:start_link({local, mongrel_sup}, mongrel_sup, [TableId]).
+	mongrel_sup:start_link(TableId).
 
 %% --------------------------------------------------------------------
 %% Func: stop/1
