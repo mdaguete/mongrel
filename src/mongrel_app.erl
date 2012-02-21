@@ -14,6 +14,7 @@
 %%% @copyright 2012 CA Meijer
 %%% @doc Mongrel application. This module implements the application behaviour. On startup
 %%%      the application starts the mongrel supervisor, mongrel_sup.
+%%% @end
 
 -module(mongrel_app).
 
@@ -33,5 +34,6 @@ start(_Type, _StartArgs) ->
 
 %% @doc Stops the application.
 %% @spec stop(any()) -> ok
+%% @end
 stop(_State) ->
     ok.
