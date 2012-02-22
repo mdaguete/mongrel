@@ -57,11 +57,9 @@ lookup(Key) ->
 init([EtsTableId]) ->
     {ok, #state{ets_table_id = EtsTableId}}.
 
-%% --------------------------------------------------------------------
-%% Function: handle_call/3
-%% Description: Handling call messages
-%% Returns: {reply, Reply, State}          |
-%% --------------------------------------------------------------------
+%% @doc Responds synchronously to server calls.
+%% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {reply, ok, NewState::tuple()}
+%% @end
 handle_call({insert, {Key, Value}}, _From, State) ->
     true = ets:insert(State#state.ets_table_id, {Key, Value}),
     {reply, ok, State};
@@ -74,13 +72,13 @@ handle_call({lookup, Key}, _From, State) ->
 	end.	
 
 %% @doc Responds asynchronously to messages.
-%% @spec handle_cast(any(), any()) -> {no_reply, State}
+%% @spec handle_cast(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_cast(_Message, State) ->
     {noreply, State}.
 
 %% @doc Responds to non-OTP messages.
-%% @spec handle_info(any(), any()) -> {no_reply, State}
+%% @spec handle_info(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_info(_Info, State) ->
     {noreply, State}.
