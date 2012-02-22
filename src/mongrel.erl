@@ -39,7 +39,7 @@
 
 %% External functions
 start_link(EtsTableId) ->
-	gen_server:start_link({local, ?SERVER}, ?MODULE, EtsTableId, []).
+	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 
 insert(KeyValuePair) ->
 	gen_server:call(?SERVER, {insert, KeyValuePair}, infinity).
@@ -55,7 +55,7 @@ lookup(Key) ->
 %% Description: Initiates the server
 %% Returns: {ok, State}          |
 %% --------------------------------------------------------------------
-init(TableId) ->
+init([TableId]) ->
     {ok, #state{ets_table_id = TableId}}.
 
 %% --------------------------------------------------------------------
