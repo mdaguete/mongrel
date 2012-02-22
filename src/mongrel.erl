@@ -22,7 +22,7 @@
 %% API
 -export([start_link/1, 
 		 add_mapping/1, 
-		 lookup/1]).
+		 get_mapping/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -43,10 +43,10 @@ start_link(EtsTableId) ->
 
 add_mapping({RecordName, FieldIds}) when is_atom(RecordName) andalso is_list(FieldIds) ->
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
-	gen_server:call(?SERVER, {insert, {RecordName, FieldIds}}, infinity).
+	gen_server:call(?SERVER, {add_mapping, {RecordName, FieldIds}}, infinity).
 
-lookup(Key) ->
-	gen_server:call(?SERVER, {lookup, Key}, infinity).
+get_mapping(Key) ->
+	gen_server:call(?SERVER, {get_mapping, Key}, infinity).
 
 
 %% Server functions
@@ -61,16 +61,12 @@ init([EtsTableId]) ->
 %% @doc Responds synchronously to server calls.
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {reply, ok, NewState::tuple()}
 %% @end
-handle_call({insert, {Key, Value}}, _From, State) ->
+handle_call({add_mapping, {Key, Value}}, _From, State) ->
     true = ets:insert(State#state.ets_table_id, {Key, Value}),
     {reply, ok, State};
-handle_call({lookup, Key}, _From, State) ->
-	case ets:lookup(State#state.ets_table_id, Key) of
-		[{Key, Value}] ->
-			{reply, Value, State};
-		[] ->
-			{reply, {error, key_not_found, Key}, State}
-	end.	
+handle_call({get_mapping, Key}, _From, State) ->
+	[{Key, Value}] = ets:lookup(State#state.ets_table_id, Key),
+	{reply, Value, State}.
 
 %% @doc Responds asynchronously to messages.
 %% @spec handle_cast(any(), tuple()) -> {no_reply, State}
