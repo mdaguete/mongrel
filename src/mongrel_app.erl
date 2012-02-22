@@ -25,7 +25,9 @@
 		 stop/1]).
 
 
-%% @doc Starts the application.
+%% @doc Starts the application. This function creates an ETS table that is 
+%%      passed to the mongrel supervisor. The table lives the for the 
+%%      lifetime of the application.
 %% @spec start(any(), list()) -> {ok, pid()} | {error, any()}
 %% @end
 start(_Type, _StartArgs) ->
