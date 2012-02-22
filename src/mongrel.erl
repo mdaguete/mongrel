@@ -10,35 +10,45 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-%% @author CA Meijer
-%% @copyright 2012 CA Meijer
-%% @doc TODO
+%%% @author CA Meijer
+%%% @copyright 2012 CA Meijer
+%%% @doc Mongrel server. This module provides the Record/Mapping API.
+%%% @end
 
 -module(mongrel).
 
 -behaviour(gen_server).
-%% --------------------------------------------------------------------
-%% Include files
-%% --------------------------------------------------------------------
 
-
-%% --------------------------------------------------------------------
-%% External exports
--export([start_link/1, insert/1, lookup/1]).
+%% API
+-export([start_link/1, 
+		 insert/1, 
+		 lookup/1]).
 
 %% gen_server callbacks
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+-export([init/1, 
+		 handle_call/3, 
+		 handle_cast/2, 
+		 handle_info/2, 
+		 terminate/2, 
+		 code_change/3]).
 
--record(state, {ets_id}).
+-define(SERVER, ?MODULE).
 
-%% ====================================================================
+%% We store the ETS table ID across calls.
+-record(state, {ets_table_id}).
+
 %% External functions
-%% ====================================================================
+start_link(EtsTableId) ->
+	gen_server:start_link({local, ?SERVER}, ?MODULE, EtsTableId, []).
+
+insert(KeyValuePair) ->
+	gen_server:call(?SERVER, {insert, KeyValuePair}, infinity).
+
+lookup(Key) ->
+	gen_server:call(?SERVER, {lookup, Key}, infinity).
 
 
-%% ====================================================================
 %% Server functions
-%% ====================================================================
 
 %% --------------------------------------------------------------------
 %% Function: init/1
@@ -46,7 +56,7 @@
 %% Returns: {ok, State}          |
 %% --------------------------------------------------------------------
 init(TableId) ->
-    {ok, #state{ets_id = TableId}}.
+    {ok, #state{ets_table_id = TableId}}.
 
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -54,10 +64,10 @@ init(TableId) ->
 %% Returns: {reply, Reply, State}          |
 %% --------------------------------------------------------------------
 handle_call({insert, {Key, Value}}, _From, State) ->
-    true = ets:insert(State#state.ets_id, {Key, Value}),
+    true = ets:insert(State#state.ets_table_id, {Key, Value}),
     {reply, ok, State};
 handle_call({lookup, Key}, _From, State) ->
-	case ets:lookup(State#state.ets_id, Key) of
+	case ets:lookup(State#state.ets_table_id, Key) of
 		[{Key, Value}] ->
 			{reply, Value, State};
 		[] ->
@@ -96,15 +106,3 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-insert(KeyValuePair) ->
-	gen_server:call(mongrel, {insert, KeyValuePair}, infinity).
-
-lookup(Key) ->
-	gen_server:call(mongrel, {lookup, Key}, infinity).
-
-start_link(StartArgs) ->
-	gen_server:start_link({local, mongrel}, mongrel, StartArgs, []).
-
-%% --------------------------------------------------------------------
-%%% Internal functions
-%% --------------------------------------------------------------------
