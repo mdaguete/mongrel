@@ -10,7 +10,8 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--module(test_mongrel_types).
+-module(test_mongrel).
+
 
 %% Include files
 -include_lib("eunit/include/eunit.hrl").
@@ -19,23 +20,28 @@
 %% record used for testing.
 -record(foo, {bar=3, baz=4}).
 
-%%
-%% Exported Functions
-%%
--export([]).
+setup() ->
+	T = ets:new(myets, [named_table, public]),
+	mongrel:start_link(T). 
 
-to_binary_test() ->
-	{bin, bin, <<1,2,3>>} = mongrel_types:binary(<<1,2,3>>),
-	{bin, bin, <<>>} = ?binary(<<>>).
+cleanup(_) ->
+	ets:delete(myets).
 
-to_uuid_test() ->
-	{bin, uuid, <<0,1,127,128,254,255>>} = mongrel_types:uuid(<<0,1,127,128,254,255>>),
-	{bin, uuid, <<0,1,127,128,254,255>>} = ?uuid(<<0,1,127,128,254,255>>).
+generator_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 [fun add_ok/0, 
+	  fun add_bad_record_name/0, 
+	  fun add_bad_field_names/0]
+	}.
 
-to_md5_test() ->
-	{bin, md5, <<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>} = mongrel_types:md5(<<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>),
-	{bin, md5, <<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>} = ?md5(<<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>).
+add_ok() ->
+	ok = mongrel:add_mapping(?mapping(foo)).
 
-mapping_test() ->
-	{foo, [bar, baz]} = ?mapping(foo).
+add_bad_record_name() ->
+	?assertError(_, mongrel:add_mapping({"foo", []})).
+
+add_bad_field_names() ->
+	?assertError(_, mongrel:add_mapping({foo, [bar, "hello"]})).
 	

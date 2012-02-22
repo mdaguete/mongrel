@@ -21,7 +21,7 @@
 
 %% API
 -export([start_link/1, 
-		 insert/1, 
+		 add_mapping/1, 
 		 lookup/1]).
 
 %% gen_server callbacks
@@ -41,8 +41,9 @@
 start_link(EtsTableId) ->
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 
-insert(KeyValuePair) ->
-	gen_server:call(?SERVER, {insert, KeyValuePair}, infinity).
+add_mapping({RecordName, FieldIds}) when is_atom(RecordName) andalso is_list(FieldIds) ->
+	[true = is_atom(FieldId) || FieldId <- FieldIds],
+	gen_server:call(?SERVER, {insert, {RecordName, FieldIds}}, infinity).
 
 lookup(Key) ->
 	gen_server:call(?SERVER, {lookup, Key}, infinity).
