@@ -16,7 +16,7 @@
 %% Include files
 %%
 -include_lib("eunit/include/eunit.hrl").
--include_lib("mongrel_types.hrl").
+-include_lib("mongrel_macros.hrl").
 
 %%
 %% Exported Functions
