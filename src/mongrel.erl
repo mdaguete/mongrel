@@ -50,13 +50,12 @@ lookup(Key) ->
 
 %% Server functions
 
-%% --------------------------------------------------------------------
-%% Function: init/1
-%% Description: Initiates the server
-%% Returns: {ok, State}          |
-%% --------------------------------------------------------------------
-init([TableId]) ->
-    {ok, #state{ets_table_id = TableId}}.
+%% @doc Initializes the server with the ETS table used to persist the
+%%      mappings needed for mapping records to documents.
+%% @spec init(EtsTableId::list(integer())) -> {ok, tuple()}
+%% @end
+init([EtsTableId]) ->
+    {ok, #state{ets_table_id = EtsTableId}}.
 
 %% --------------------------------------------------------------------
 %% Function: handle_call/3
@@ -74,35 +73,27 @@ handle_call({lookup, Key}, _From, State) ->
 			{reply, {error, key_not_found, Key}, State}
 	end.	
 
-%% --------------------------------------------------------------------
-%% Function: handle_cast/2
-%% Description: Handling cast messages
-%% Returns: {noreply, State}          |
-%% --------------------------------------------------------------------
-handle_cast(_Msg, State) ->
+%% @doc Responds asynchronously to messages.
+%% @spec handle_cast(any(), any()) -> {no_reply, State}
+%% @end
+handle_cast(_Message, State) ->
     {noreply, State}.
 
-%% --------------------------------------------------------------------
-%% Function: handle_info/2
-%% Description: Handling all non call/cast messages
-%% Returns: {noreply, State}          |
-%% --------------------------------------------------------------------
+%% @doc Responds to non-OTP messages.
+%% @spec handle_info(any(), any()) -> {no_reply, State}
+%% @end
 handle_info(_Info, State) ->
     {noreply, State}.
 
-%% --------------------------------------------------------------------
-%% Function: terminate/2
-%% Description: Shutdown the server
-%% Returns: any (ignored by gen_server)
-%% --------------------------------------------------------------------
+%% @doc Handles the shutdown of the server.
+%% @spec terminate(any(), any()) -> ok
+%% @end
 terminate(_Reason, _State) ->
     ok.
 
-%% --------------------------------------------------------------------
-%% Func: code_change/3
-%% Purpose: Convert process state when code is changed
-%% Returns: {ok, NewState}
-%% --------------------------------------------------------------------
-code_change(_OldVsn, State, _Extra) ->
+%% @doc Responds to code changes.
+%% @spec code_change(any(), any(), any()) -> {ok, State}
+%% @end
+code_change(_OldVersion, State, _Extra) ->
     {ok, State}.
 
