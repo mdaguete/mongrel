@@ -16,4 +16,4 @@
 
 -define(md5(X), mongrel_types:md5(X)).
 
--define(to_map(Record), {Record, record_info(fields, Record)}).
+-define(mapping(Record), {Record, record_info(fields, Record)}).

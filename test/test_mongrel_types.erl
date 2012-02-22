@@ -18,6 +18,9 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("mongrel_macros.hrl").
 
+%% record used for testing.
+-record(foo, {bar=3, baz=4}).
+
 %%
 %% Exported Functions
 %%
@@ -34,3 +37,6 @@ to_uuid_test() ->
 to_md5_test() ->
 	{bin, md5, <<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>} = mongrel_types:md5(<<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>),
 	{bin, md5, <<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>} = ?md5(<<0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15>>).
+
+mapping_test() ->
+	{foo, [bar, baz]} = ?mapping(foo).
