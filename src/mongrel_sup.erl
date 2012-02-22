@@ -26,27 +26,24 @@
 %% supervisor callbacks
 -export([init/1]).
 
-%% --------------------------------------------------------------------
-%% Macros
-%% --------------------------------------------------------------------
 -define(SERVER, ?MODULE).
 
 %% External functions
-start_link(TableId) ->
-	supervisor:start_link({local, ?MODULE}, ?MODULE, [TableId]).
+
+%% @doc Starts the supervisor on the local node and registers the
+%%      process.
+%% @spec start_link(integer()) -> {ok, pid()} | {error, any()}
+%% @end
+start_link(EtsTableId) ->
+	supervisor:start_link({local, ?SERVER}, ?MODULE, [EtsTableId]).
 
 
-%% Server functions
-%% Func: init/1
-%% Returns: {ok,  {SupFlags,  [ChildSpec]}} |
-%% --------------------------------------------------------------------
-init([TableId]) ->
+%% @doc Supervisor callback. Starts the mongrel server.
+%% @spec init(list(integer())) -> {ok, {RestartStrategy, Servers::list(module())}}
+%% @end
+init(EtsTableIdList) ->
+	[TableId] = EtsTableIdList,
     Server = {mongrel, {mongrel, start_link, [TableId]},
 	      permanent, 2000, worker, [mongrel]},
 	RestartStrategy = {one_for_one, 4, 3600}, 
     {ok, {RestartStrategy, [Server]}}.
-
-%% ====================================================================
-%% Internal functions
-%% ====================================================================
-
