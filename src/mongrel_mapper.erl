@@ -26,7 +26,7 @@
 		 get_mapping/1,
 		 is_mapped/1,
 		 has_id/1,
-		 to_document/1]).
+		 map/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -68,10 +68,10 @@ has_id(RecordName) when is_atom(RecordName) ->
 				end,
 	lists:foldl(CheckHasId, false, FieldIds).
 
-to_document(Record) ->
+map(Record) ->
 	[RecordName | FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
-	list_to_tuple(concat_id_values(FieldIds, FieldValues, [])).
+	concat_id_values(FieldIds, FieldValues, []).
 
 
 %% Server functions
@@ -120,7 +120,7 @@ code_change(_OldVersion, State, _Extra) ->
 
 %% Internal functions
 concat_id_values([], [], Result) ->
-	lists:reverse(Result);
+	erlang:list_to_tuple(lists:reverse(Result));
 concat_id_values([_FieldId|IdTail], [undefined|ValueTail], Result) ->
 	concat_id_values(IdTail, ValueTail, Result);
 concat_id_values([FieldId|IdTail], [FieldValue|ValueTail], Result) ->

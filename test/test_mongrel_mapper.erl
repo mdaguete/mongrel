@@ -121,7 +121,7 @@ to_document_ok_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{bar=3, baz=5},
-	     {bar, 3, baz, 5} = mongrel_mapper:to_document(Foo)
+	     {bar, 3, baz, 5} = mongrel_mapper:map(Foo)
      end}.
 	
 to_document_with_undefined_value_test_() ->
@@ -131,6 +131,6 @@ to_document_with_undefined_value_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{},
-	     {baz, 4} = mongrel_mapper:to_document(Foo)
+	     {baz, 4} = mongrel_mapper:map(Foo)
      end}.
 	
