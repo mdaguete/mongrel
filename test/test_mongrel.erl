@@ -25,31 +25,50 @@ setup() ->
 	mongrel:start_link(T). 
 
 cleanup(_) ->
-	ets:delete_all_objects(myets).
+	ets:delete(myets).
 
-generator_test_() ->
+add_ok_test_() ->
 	{setup,
 	 fun setup/0, 
 	 fun cleanup/1,
-	 [fun add_ok/0, 
-	  fun add_bad_record_name/0, 
-	  fun add_bad_field_names/0,
-	  fun get_mapping_ok/0,
-	  fun get_mapping_fails/0]
+	 fun() ->
+			 ok = mongrel:add_mapping(?mapping(foo))
+	 end
 	}.
 
-add_ok() ->
-	ok = mongrel:add_mapping(?mapping(foo)).
+add_bad_record_name_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ?assertError(_, mongrel:add_mapping({"foo", [bar]}))
+	 end
+	}.
 
-add_bad_record_name() ->
-	?assertError(_, mongrel:add_mapping({"foo", []})).
+add_bad_field_name_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ?assertError(_, mongrel:add_mapping({foo, [bar, "baz"]}))
+	 end
+	}.
 
-add_bad_field_names() ->
-	?assertError(_, mongrel:add_mapping({foo, [bar, "hello"]})).
-	
-get_mapping_ok() ->
-	ok = mongrel:add_mapping(?mapping(foo)),
-	[bar, baz] = mongrel:get_mapping(foo).
+get_mapping_ok_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ok = mongrel:add_mapping(?mapping(foo)),
+			 [bar, baz] = mongrel:get_mapping(foo)
+	 end
+	}.
 
-get_mapping_fails() ->
-	?assertThrow(_, mongrel:get_mapping(bar)).
+get_mapping_not_ok_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ?assertError(_, mongrel:get_mapping(foo))
+	 end
+	}.
