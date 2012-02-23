@@ -45,7 +45,7 @@ start_link(EtsTableId) ->
 %% @end
 init(EtsTableIdList) ->
 	[TableId] = EtsTableIdList,
-    Server = {mongrel, {mongrel, start_link, [TableId]},
+    Server = {mongrel_mapper, {mongrel_mapper, start_link, [TableId]},
 	      permanent, 2000, worker, [mongrel]},
 	RestartStrategy = {one_for_one, 4, 3600}, 
     {ok, {RestartStrategy, [Server]}}.

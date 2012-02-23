@@ -15,7 +15,8 @@
 %%% @doc Mongrel server. This module provides the Record/Mapping API.
 %%% @end
 
--module(mongrel).
+
+-module(mongrel_mapper).
 
 -behaviour(gen_server).
 
