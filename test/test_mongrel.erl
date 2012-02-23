@@ -25,7 +25,7 @@ setup() ->
 	mongrel:start_link(T). 
 
 cleanup(_) ->
-	ets:delete(myets).
+	ets:delete_all_objects(myets).
 
 generator_test_() ->
 	{setup,
@@ -33,7 +33,9 @@ generator_test_() ->
 	 fun cleanup/1,
 	 [fun add_ok/0, 
 	  fun add_bad_record_name/0, 
-	  fun add_bad_field_names/0]
+	  fun add_bad_field_names/0,
+	  fun get_mapping_ok/0,
+	  fun get_mapping_fails/0]
 	}.
 
 add_ok() ->
@@ -45,3 +47,9 @@ add_bad_record_name() ->
 add_bad_field_names() ->
 	?assertError(_, mongrel:add_mapping({foo, [bar, "hello"]})).
 	
+get_mapping_ok() ->
+	ok = mongrel:add_mapping(?mapping(foo)),
+	[bar, baz] = mongrel:get_mapping(foo).
+
+get_mapping_fails() ->
+	?assertThrow(_, mongrel:get_mapping(bar)).
