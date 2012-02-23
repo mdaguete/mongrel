@@ -24,7 +24,8 @@
 -export([start_link/1, 
 		 add_mapping/1, 
 		 get_mapping/1,
-		 is_mapped/1]).
+		 is_mapped/1,
+		 to_document/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -59,6 +60,11 @@ is_mapped(RecordName) when is_atom(RecordName) ->
 			true
 	end.
 
+to_document(Record) ->
+	[RecordName | FieldValues] = tuple_to_list(Record),
+	FieldIds = mongrel_mapper:get_mapping(RecordName),
+	list_to_tuple(concat_id_values(FieldIds, FieldValues, [])).
+
 
 %% Server functions
 
@@ -67,14 +73,14 @@ is_mapped(RecordName) when is_atom(RecordName) ->
 %% @spec init(EtsTableId::list(integer())) -> {ok, tuple()}
 %% @end
 init([EtsTableId]) ->
-    {ok, #state{ets_table_id = EtsTableId}}.
+	{ok, #state{ets_table_id = EtsTableId}}.
 
 %% @doc Responds synchronously to server calls.
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {reply, ok, NewState::tuple()}
 %% @end
 handle_call({add_mapping, {Key, Value}}, _From, State) ->
-    true = ets:insert(State#state.ets_table_id, {Key, Value}),
-    {reply, ok, State};
+	true = ets:insert(State#state.ets_table_id, {Key, Value}),
+	{reply, ok, State};
 handle_call({get_mapping, Key}, _From, State) ->
 	Reply = ets:lookup(State#state.ets_table_id, Key),
 	{reply, Reply, State}.
@@ -83,23 +89,29 @@ handle_call({get_mapping, Key}, _From, State) ->
 %% @spec handle_cast(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_cast(_Message, State) ->
-    {noreply, State}.
+	{noreply, State}.
 
 %% @doc Responds to non-OTP messages.
 %% @spec handle_info(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_info(_Info, State) ->
-    {noreply, State}.
+	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
 %% @spec terminate(any(), any()) -> ok
 %% @end
 terminate(_Reason, _State) ->
-    ok.
+	ok.
 
 %% @doc Responds to code changes.
 %% @spec code_change(any(), any(), any()) -> {ok, State}
 %% @end
 code_change(_OldVersion, State, _Extra) ->
-    {ok, State}.
+	{ok, State}.
 
+
+%% Internal functions
+concat_id_values([], [], Result) ->
+	lists:reverse(Result);
+concat_id_values([FieldId|IdTail], [FieldValue|ValueTail], Result) ->
+	concat_id_values(IdTail, ValueTail, [FieldValue, FieldId | Result]).

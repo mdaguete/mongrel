@@ -94,3 +94,14 @@ is_mapped_false_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     false = mongrel_mapper:is_mapped(bar)
      end}.
+
+to_document_ok_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+		 Foo = #foo{bar=3, baz=5},
+	     {bar, 3, baz, 5} = mongrel_mapper:to_document(Foo)
+     end}.
+	
