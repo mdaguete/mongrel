@@ -20,6 +20,7 @@
 
 %% record used for testing.
 -record(foo, {bar, baz=4}).
+-record(bar, {'_id'}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -95,6 +96,24 @@ is_mapped_false_test_() ->
 	     false = mongrel_mapper:is_mapped(bar)
      end}.
 
+has_id_false_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     false = mongrel_mapper:has_id(foo)
+     end}.
+	
+has_id_true_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+	     true = mongrel_mapper:has_id(bar)
+     end}.
+	
 to_document_ok_test_() ->
 	{setup,
      fun setup/0,

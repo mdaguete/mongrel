@@ -25,6 +25,7 @@
 		 add_mapping/1, 
 		 get_mapping/1,
 		 is_mapped/1,
+		 has_id/1,
 		 to_document/1]).
 
 %% gen_server callbacks
@@ -60,9 +61,16 @@ is_mapped(RecordName) when is_atom(RecordName) ->
 			true
 	end.
 
+has_id(RecordName) when is_atom(RecordName) ->
+	FieldIds = get_mapping(RecordName),
+	CheckHasId = fun(FieldId, Result) ->
+									   Result or (FieldId =:= '_id')
+				end,
+	lists:foldl(CheckHasId, false, FieldIds).
+
 to_document(Record) ->
 	[RecordName | FieldValues] = tuple_to_list(Record),
-	FieldIds = mongrel_mapper:get_mapping(RecordName),
+	FieldIds = get_mapping(RecordName),
 	list_to_tuple(concat_id_values(FieldIds, FieldValues, [])).
 
 
