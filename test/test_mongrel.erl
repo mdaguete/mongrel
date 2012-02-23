@@ -72,3 +72,23 @@ get_mapping_not_ok_test_() ->
 			 ?assertError(_, mongrel:get_mapping(foo))
 	 end
 	}.
+
+is_mapped_true_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ok = mongrel:add_mapping(?mapping(foo)),
+			 true = mongrel:is_mapped(foo)
+	 end
+	}.
+
+is_mapped_false_test_() ->
+	{setup,
+	 fun setup/0, 
+	 fun cleanup/1,
+	 fun() ->
+			 ok = mongrel:add_mapping(?mapping(foo)),
+			 false = mongrel:is_mapped(bar)
+	 end
+	}.

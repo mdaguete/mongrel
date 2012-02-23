@@ -22,7 +22,8 @@
 %% API
 -export([start_link/1, 
 		 add_mapping/1, 
-		 get_mapping/1]).
+		 get_mapping/1,
+		 is_mapped/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -45,8 +46,17 @@ add_mapping({RecordName, FieldIds}) when is_atom(RecordName) andalso is_list(Fie
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
 	gen_server:call(?SERVER, {add_mapping, {RecordName, FieldIds}}, infinity).
 
-get_mapping(Key) ->
-	gen_server:call(?SERVER, {get_mapping, Key}, infinity).
+get_mapping(RecordName) ->
+	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
+	FieldIds.
+
+is_mapped(RecordName) ->
+	case gen_server:call(?SERVER, {get_mapping, RecordName}, infinity) of
+		[] ->
+			false;
+		_ ->
+			true
+	end.
 
 
 %% Server functions
@@ -65,8 +75,8 @@ handle_call({add_mapping, {Key, Value}}, _From, State) ->
     true = ets:insert(State#state.ets_table_id, {Key, Value}),
     {reply, ok, State};
 handle_call({get_mapping, Key}, _From, State) ->
-	[{Key, Value}] = ets:lookup(State#state.ets_table_id, Key),
-	{reply, Value, State}.
+	Reply = ets:lookup(State#state.ets_table_id, Key),
+	{reply, Reply, State}.
 
 %% @doc Responds asynchronously to messages.
 %% @spec handle_cast(any(), tuple()) -> {no_reply, State}
