@@ -49,7 +49,15 @@ add_bad_field_name_test_() ->
      fun setup/0,
      fun cleanup/1,
      fun () ->
-	     ?assertError(_,mongrel_mapper:add_mapping({foo,[bar,"baz"]}))
+	     ?assertError(_,mongrel_mapper:add_mapping({foo, [bar,"baz"]}))
+     end}.
+
+add_bad_field_list_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ?assertError(_,mongrel_mapper:add_mapping({foo, not_a_list}))
      end}.
 
 get_mapping_ok_test_() ->

@@ -43,19 +43,19 @@
 start_link(EtsTableId) ->
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 
-add_mapping({RecordName, FieldIds}) when is_atom(RecordName) andalso is_list(FieldIds) ->
+add_mapping({RecordName, FieldIds}) when is_atom(RecordName) ->
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
 	gen_server:call(?SERVER, {add_mapping, {RecordName, FieldIds}}, infinity).
 
-get_mapping(RecordName) ->
+get_mapping(RecordName) when is_atom(RecordName) ->
 	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
 	FieldIds.
 
-is_mapped(RecordName) ->
+is_mapped(RecordName) when is_atom(RecordName) ->
 	case gen_server:call(?SERVER, {get_mapping, RecordName}, infinity) of
 		[] ->
 			false;
-		_ ->
+		[{RecordName, _}] ->
 			true
 	end.
 
