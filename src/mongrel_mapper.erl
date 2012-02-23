@@ -113,5 +113,7 @@ code_change(_OldVersion, State, _Extra) ->
 %% Internal functions
 concat_id_values([], [], Result) ->
 	lists:reverse(Result);
+concat_id_values([_FieldId|IdTail], [undefined|ValueTail], Result) ->
+	concat_id_values(IdTail, ValueTail, Result);
 concat_id_values([FieldId|IdTail], [FieldValue|ValueTail], Result) ->
 	concat_id_values(IdTail, ValueTail, [FieldValue, FieldId | Result]).

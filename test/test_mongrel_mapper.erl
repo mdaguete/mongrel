@@ -19,7 +19,7 @@
 -include_lib("mongrel_macros.hrl").
 
 %% record used for testing.
--record(foo, {bar=3, baz=4}).
+-record(foo, {bar, baz=4}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -96,12 +96,22 @@ is_mapped_false_test_() ->
      end}.
 
 to_document_ok_test_() ->
-    {setup,
+	{setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{bar=3, baz=5},
 	     {bar, 3, baz, 5} = mongrel_mapper:to_document(Foo)
+     end}.
+	
+to_document_with_undefined_value_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+		 Foo = #foo{},
+	     {baz, 4} = mongrel_mapper:to_document(Foo)
      end}.
 	
