@@ -21,6 +21,7 @@
 %% record used for testing.
 -record(foo, {bar, baz=4}).
 -record(bar, {'_id'}).
+-record(baz, {x=2, y=8}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -132,5 +133,16 @@ to_document_with_undefined_value_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{},
 	     [{foo, {baz, 4}}] = mongrel_mapper:map(Foo)
+     end}.
+	
+to_document_with_nested_doc_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
+		 Foo = #foo{baz= #baz{}},
+	     [{foo, {baz, {x, 2, y, 8}, baz, 4}}] = mongrel_mapper:map(Foo)
      end}.
 	
