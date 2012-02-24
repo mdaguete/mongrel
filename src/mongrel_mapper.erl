@@ -59,6 +59,14 @@ is_mapped(RecordName) when is_atom(RecordName) ->
 			false;
 		[{RecordName, _}] ->
 			true
+	end;
+is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
+	[RecordName|FieldValues] = tuple_to_list(Record),
+	case gen_server:call(?SERVER, {get_mapping, RecordName}, infinity) of
+		[] ->
+			false;
+		[{RecordName, FieldIds}] ->
+			length(FieldIds) =:= length(FieldValues)
 	end.
 
 has_id(RecordName) when is_atom(RecordName) ->

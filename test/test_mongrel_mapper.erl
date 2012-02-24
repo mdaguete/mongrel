@@ -97,6 +97,24 @@ is_mapped_false_test_() ->
 	     false = mongrel_mapper:is_mapped(bar)
      end}.
 
+is_mapped_record_true_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     true = mongrel_mapper:is_mapped({foo, 1, 3})
+     end}.
+
+is_mapped_record_false_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     false = mongrel_mapper:is_mapped({foo, 1, 3, 4})
+     end}.
+
 has_id_false_test_() ->
     {setup,
      fun setup/0,
