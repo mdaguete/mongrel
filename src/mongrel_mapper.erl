@@ -71,7 +71,7 @@ has_id(RecordName) when is_atom(RecordName) ->
 map(Record) ->
 	[RecordName | FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
-	concat_id_values(FieldIds, FieldValues, []).
+	[{RecordName, concat_id_values(FieldIds, FieldValues, [])}].
 
 
 %% Server functions
