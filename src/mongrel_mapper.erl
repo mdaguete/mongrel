@@ -70,11 +70,21 @@ is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	end.
 
 has_id(RecordName) when is_atom(RecordName) ->
-	FieldIds = get_mapping(RecordName),
+	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
 	CheckHasId = fun(FieldId, Result) ->
 									   Result or (FieldId =:= '_id')
 				end,
-	lists:foldl(CheckHasId, false, FieldIds).
+	lists:foldl(CheckHasId, false, FieldIds);
+has_id(Record) when is_tuple(Record) ->
+	[RecordName|_Tail] = tuple_to_list(Record),
+	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
+	Fields = [RecordName|FieldIds],
+	Values = tuple_to_list(Record),
+	FieldsValues = lists:zip(Fields, Values),
+	CheckHasId = fun({FieldId, FieldValue}, Result) ->
+									   Result or ((FieldId =:= '_id') andalso (FieldValue =/= undefined))
+				end,
+	lists:foldl(CheckHasId, false, FieldsValues).
 
 map(Record) ->
 	[RecordName | FieldValues] = tuple_to_list(Record),
@@ -133,3 +143,4 @@ concat_id_values([_FieldId|IdTail], [undefined|ValueTail], Result) ->
 	concat_id_values(IdTail, ValueTail, Result);
 concat_id_values([FieldId|IdTail], [FieldValue|ValueTail], Result) ->
 	concat_id_values(IdTail, ValueTail, [FieldValue, FieldId | Result]).
+	

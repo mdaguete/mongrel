@@ -132,6 +132,24 @@ has_id_true_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 	     true = mongrel_mapper:has_id(bar)
      end}.
+
+record_has_id_true_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+	     true = mongrel_mapper:has_id(#bar{'_id'=3})
+     end}.
+	
+record_has_id_false_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+	     false = mongrel_mapper:has_id(#bar{})
+     end}.
 	
 to_document_ok_test_() ->
 	{setup,
@@ -163,4 +181,3 @@ to_document_with_nested_doc_test_() ->
 		 Foo = #foo{baz= #baz{}},
 	     [{foo, {baz, {x, 2, y, 8}, baz, 4}}] = mongrel_mapper:map(Foo)
      end}.
-	
