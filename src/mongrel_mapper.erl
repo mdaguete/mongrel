@@ -70,7 +70,7 @@ is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	end.
 
 has_id(RecordName) when is_atom(RecordName) ->
-	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
+	FieldIds = get_mapping(RecordName),
 	CheckHasId = fun(FieldId, Result) ->
 									   Result or (FieldId =:= '_id')
 				end,
