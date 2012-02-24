@@ -178,6 +178,6 @@ map_nested_doc_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
-		 Foo = #foo{baz= #baz{}},
-	     [{foo, {baz, {x, 2, y, 8}, baz, 4}}] = mongrel_mapper:map(Foo)
+		 Foo = #foo{bar=3, baz= #baz{}},
+	     [{foo, {bar, 3, baz, {x, 2, y, 8}}}] = mongrel_mapper:map(Foo)
      end}.
