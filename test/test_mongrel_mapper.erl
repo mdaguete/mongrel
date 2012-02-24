@@ -148,7 +148,7 @@ record_has_id_false_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
-	     false = mongrel_mapper:has_id(#bar{})
+	     false = mongrel_mapper:has_id({bar,1,2})
      end}.
 	
 map_basic_test_() ->

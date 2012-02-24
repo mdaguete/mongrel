@@ -75,16 +75,9 @@ has_id(RecordName) when is_atom(RecordName) ->
 									   Result or (FieldId =:= '_id')
 				end,
 	lists:foldl(CheckHasId, false, FieldIds);
-has_id(Record) when is_tuple(Record) ->
-	[RecordName|_Tail] = tuple_to_list(Record),
-	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
-	Fields = [RecordName|FieldIds],
-	Values = tuple_to_list(Record),
-	FieldsValues = lists:zip(Fields, Values),
-	CheckHasId = fun({FieldId, FieldValue}, Result) ->
-									   Result or ((FieldId =:= '_id') andalso (FieldValue =/= undefined))
-				end,
-	lists:foldl(CheckHasId, false, FieldsValues).
+has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
+	[RecordName|FieldValues] = tuple_to_list(Record),
+	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
 
 map(Record) ->
 	[RecordName | FieldValues] = tuple_to_list(Record),
