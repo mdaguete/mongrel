@@ -151,7 +151,7 @@ record_has_id_false_test_() ->
 	     false = mongrel_mapper:has_id(#bar{})
      end}.
 	
-to_document_ok_test_() ->
+map_basic_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
@@ -161,7 +161,7 @@ to_document_ok_test_() ->
 	     [{foo, {bar, 3, baz, 5}}] = mongrel_mapper:map(Foo)
      end}.
 	
-to_document_with_undefined_value_test_() ->
+map_undefined_value_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
@@ -171,7 +171,7 @@ to_document_with_undefined_value_test_() ->
 	     [{foo, {baz, 4}}] = mongrel_mapper:map(Foo)
      end}.
 	
-to_document_with_nested_doc_test_() ->
+map_nested_doc_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
