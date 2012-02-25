@@ -22,6 +22,7 @@
 -record(foo, {bar, baz=4}).
 -record(bar, {'_id'}).
 -record(baz, {x=2, y=8}).
+-record(buzz, {'_id', w, z}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -275,5 +276,29 @@ doc_with_deep_nested_records_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{baz=#foo{baz=#foo{bar=3}}},
 	     [{foo, {baz, {baz, {bar, 3, baz, 4}}}}] = mongrel_mapper:map(Foo)
+     end}.
+	
+doc_with_deep_nested_records_with_ids_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(buzz)), 
+		 Buzz = #buzz{'_id'=1, w=1000, z=#buzz{'_id'=2, w=#buzz{'_id'=-2, w=0, z=7}, z=#buzz{'_id'=3, z=#buzz{'_id'=4, z=4} } } },
+	     [{buzz,{'_id',-2,w,0,z,7}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{'$type',buzz,'$id',4}}},
+                 {buzz,{'_id',2,w,{'$type',buzz,'$id',-2},z,{'$type',buzz,'$id',3}}},
+                 {buzz,{'_id',1,w,1000,z,{'$type',buzz,'$id',2}}}] = mongrel_mapper:map(Buzz)
+     end}.
+
+doc_with_list_with_deep_nesting_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(buzz)), 
+		 Buzz = #buzz{'_id'=1, z=[1, #buzz{'_id'=2, z=#buzz{'_id'=3, z=#buzz{'_id'=4, z=4} }, w=#buzz{'_id'=5} }, 3, #buzz{'_id'=6}]},
+		 [{buzz,{'_id',5}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{'$type',buzz,'$id',4}}},
+                 {buzz,{'_id',2,w,{'$type',buzz,'$id',5},z,{'$type',buzz,'$id',3}}},{buzz,{'_id',6}},
+                 {buzz,{'_id',1,z,[1,{'$type',buzz,'$id',2},3,{'$type',buzz,'$id',6}]}}] = mongrel_mapper:map(Buzz)
      end}.
 	
