@@ -157,7 +157,13 @@ parse_mapped_tuple(Value) ->
 		true ->
 			[RecordName|_FieldValues] = tuple_to_list(Value),
 			{ChildDoc, GrandChildren} = parse_record_value(Value),
-			{{'$type', RecordName, '$id', get_id(Value)}, GrandChildren ++ [{RecordName, ChildDoc}]}
+			Id = get_id(Value),
+			case Id of
+				undefined ->
+					{{'$type', RecordName}, GrandChildren ++ [{RecordName, ChildDoc}]};
+				_ ->
+					{{'$type', RecordName, '$id', Id}, GrandChildren ++ [{RecordName, ChildDoc}]}
+			end
 	end.
 
 parse_record_value(Record) ->
