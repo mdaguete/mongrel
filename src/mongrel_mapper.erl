@@ -73,16 +73,16 @@ has_id(RecordName) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	CheckHasId = fun(FieldId, Result) ->
 									   Result or (FieldId =:= '_id')
-				end,
+				 end,
 	lists:foldl(CheckHasId, false, FieldIds);
 has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
 
 map(Record) ->
-	[RecordName | FieldValues] = tuple_to_list(Record),
-	FieldIds = get_mapping(RecordName),
-	[{RecordName, concat_id_values(FieldIds, FieldValues, [])}].
+	[RecordName|_FieldValues] = tuple_to_list(Record),
+	{Document, ChildDocs} = parse_record_value(Record),
+	ChildDocs ++ [{RecordName, Document}].
 
 
 %% Server functions
@@ -130,10 +130,19 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %% Internal functions
-concat_id_values([], [], Result) ->
-	erlang:list_to_tuple(lists:reverse(Result));
-concat_id_values([_FieldId|IdTail], [undefined|ValueTail], Result) ->
-	concat_id_values(IdTail, ValueTail, Result);
-concat_id_values([FieldId|IdTail], [FieldValue|ValueTail], Result) ->
-	concat_id_values(IdTail, ValueTail, [FieldValue, FieldId | Result]).
+parse_record_value(Record) ->
+	[RecordName|FieldValues] = tuple_to_list(Record),
+	FieldIds = get_mapping(RecordName),
+	Result = [],
+	ChildDocs = [],
+	parse_record_value(FieldIds, FieldValues, ChildDocs, Result).
+
+parse_record_value([], [], ChildDocs, Result) ->
+	{list_to_tuple(Result), ChildDocs};
+parse_record_value([_FieldId|IdTail], [undefined|ValueTail], ChildDocs, Result) ->
+	parse_record_value(IdTail, ValueTail, ChildDocs, Result);
+parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], ChildDocs, Result) ->
+	parse_record_value(IdTail, ValueTail, ChildDocs, Result ++ [FieldId, FieldValue]).
+
+	
 	
