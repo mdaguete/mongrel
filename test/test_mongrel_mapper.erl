@@ -222,3 +222,36 @@ map_nested_doc_with_undefined_id_test_() ->
 		 Foo = #foo{bar= #bar{'_id'=undefined}, baz=9},
 	     [{bar, {}}, {foo, {bar, {'$type', bar}, baz, 9}}] = mongrel_mapper:map(Foo)
      end}.
+
+doc_with_simple_list_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+		 Foo = #foo{bar=[1,2,3], baz=5},
+	     [{foo, {bar, [1,2,3], baz, 5}}] = mongrel_mapper:map(Foo)
+     end}.
+	
+doc_with_complex_list_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+		 Foo = #foo{bar=[1,2,#bar{'_id'=8}, 4], baz=5},
+	     [{bar, {'_id', 8}}, {foo, {bar, [1,2, {'$type', bar, '$id', 8}, 4], baz, 5}}] = mongrel_mapper:map(Foo)
+     end}.
+
+doc_with_complex_list_2_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
+		 Foo = #foo{bar=[1,2,#bar{'_id'=3}, #baz{}], baz=5},
+	     [{bar, {'_id', 3}}, {foo, {bar, [1,2, {'$type', bar, '$id', 3}, {x, 2, y, 8}], baz, 5}}] = mongrel_mapper:map(Foo)
+     end}.
