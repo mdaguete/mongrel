@@ -146,7 +146,12 @@ code_change(_OldVersion, State, _Extra) ->
 
 %% Internal functions
 parse_value(Value) when is_tuple(Value) ->
-	parse_mapped_tuple(Value);
+	case mongrel_mapper:is_mapped(Value) of
+		true ->
+			parse_mapped_tuple(Value);
+		false ->
+			{Value, []}
+	end;
 parse_value(Value) when is_list(Value) ->
 	parse_list_values(Value, [], []);
 parse_value(Value) ->

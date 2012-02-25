@@ -255,3 +255,15 @@ doc_with_complex_list_2_test_() ->
 		 Foo = #foo{bar=[1,2,#bar{'_id'=3}, #baz{}], baz=5},
 	     [{bar, {'_id', 3}}, {foo, {bar, [1,2, {'$type', bar, '$id', 3}, {x, 2, y, 8}], baz, 5}}] = mongrel_mapper:map(Foo)
      end}.
+
+doc_with_non_record_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
+		 Bin = ?binary(<<1,2,3>>),
+		 Foo = #foo{bar=Bin, baz= <<"hello, world">>},
+	     [{foo, {bar, Bin, baz, <<"hello, world">>}}] = mongrel_mapper:map(Foo)
+     end}.
+	
