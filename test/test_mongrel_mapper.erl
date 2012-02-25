@@ -158,7 +158,7 @@ get_id_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
-	     3 = mongrel_mapper:get_id(#bar{'_id'=3})
+	     3 = mongrel_mapper:get_field(#bar{'_id'=3}, '_id')
      end}.
 
 get_undefined_id_test_() ->
@@ -167,7 +167,16 @@ get_undefined_id_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
-	     undefined = mongrel_mapper:get_id(#foo{})
+	     undefined = mongrel_mapper:get_field(#foo{}, '_id')
+     end}.
+
+get_field_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     4 = mongrel_mapper:get_field(#foo{}, baz)
      end}.
 	
 	

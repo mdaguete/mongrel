@@ -26,7 +26,7 @@
 		 get_mapping/1,
 		 is_mapped/1,
 		 has_id/1,
-		 get_id/1,
+		 get_field/2,
 		 map/1]).
 
 %% gen_server callbacks
@@ -80,13 +80,13 @@ has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
 
-get_id(Record) ->
+get_field(Record, Field) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	Fields = lists:zip(FieldIds, FieldValues),
 	GetId = fun({FieldId, FieldValue}, Result) ->
 					case FieldId of
-						'_id' ->
+						Field ->
 							FieldValue;
 						_ ->
 							Result
@@ -164,7 +164,7 @@ parse_mapped_tuple(Value, DocList) ->
 		true ->
 			[RecordName|_FieldValues] = tuple_to_list(Value),
 			{ChildDoc, UpdatedDocList} = parse_record_value(Value, DocList),
-			Id = get_id(Value),
+			Id = get_field(Value, '_id'),
 			case Id of
 				undefined ->
 					{{'$type', RecordName}, UpdatedDocList ++ [{RecordName, ChildDoc}]};
