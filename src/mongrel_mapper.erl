@@ -130,6 +130,11 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %% Internal functions
+parse_value(Value) when is_tuple(Value) ->
+	parse_record_value(Value);
+parse_value(Value) ->
+	{Value, []}.
+
 parse_record_value(Record) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
@@ -142,7 +147,8 @@ parse_record_value([], [], ChildDocs, Result) ->
 parse_record_value([_FieldId|IdTail], [undefined|ValueTail], ChildDocs, Result) ->
 	parse_record_value(IdTail, ValueTail, ChildDocs, Result);
 parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], ChildDocs, Result) ->
-	parse_record_value(IdTail, ValueTail, ChildDocs, Result ++ [FieldId, FieldValue]).
+	{ChildValue, GrandChildrenDocs} = parse_value(FieldValue),
+	parse_record_value(IdTail, ValueTail, GrandChildrenDocs ++ ChildDocs, Result ++ [FieldId, ChildValue]).
 
 	
 	
