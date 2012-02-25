@@ -96,7 +96,7 @@ get_id(Record) ->
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
-	{Document, ChildDocs} = parse_record_value(Record),
+	{Document, ChildDocs} = parse_record_value(Record, []),
 	ChildDocs ++ [{RecordName, Document}].
 
 
@@ -145,51 +145,50 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %% Internal functions
-parse_value(Value) when is_tuple(Value) ->
+parse_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
-			parse_mapped_tuple(Value);
+			parse_mapped_tuple(Value, DocList);
 		false ->
-			{Value, []}
+			{Value, DocList}
 	end;
-parse_value(Value) when is_list(Value) ->
-	parse_list_values(Value, [], []);
-parse_value(Value) ->
-	{Value, []}.
+parse_value(Value, DocList) when is_list(Value) ->
+	parse_list_values(Value, DocList, []);
+parse_value(Value, DocList) ->
+	{Value, DocList}.
 
-parse_mapped_tuple(Value) ->
+parse_mapped_tuple(Value, DocList) ->
 	case has_id(Value) of
 		false ->
-			parse_record_value(Value);
+			parse_record_value(Value, DocList);
 		true ->
 			[RecordName|_FieldValues] = tuple_to_list(Value),
-			{ChildDoc, GrandChildren} = parse_record_value(Value),
+			{ChildDoc, UpdatedDocList} = parse_record_value(Value, DocList),
 			Id = get_id(Value),
 			case Id of
 				undefined ->
-					{{'$type', RecordName}, GrandChildren ++ [{RecordName, ChildDoc}]};
+					{{'$type', RecordName}, UpdatedDocList ++ [{RecordName, ChildDoc}]};
 				_ ->
-					{{'$type', RecordName, '$id', Id}, GrandChildren ++ [{RecordName, ChildDoc}]}
+					{{'$type', RecordName, '$id', Id}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
 			end
 	end.
 
-parse_record_value(Record) ->
+parse_record_value(Record, DocList) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	Result = [],
-	ChildDocs = [],
-	parse_record_value(FieldIds, FieldValues, ChildDocs, Result).
+	parse_record_value(FieldIds, FieldValues, DocList, Result).
 
-parse_record_value([], [], ChildDocs, Result) ->
-	{list_to_tuple(Result), ChildDocs};
-parse_record_value([_FieldId|IdTail], [undefined|ValueTail], ChildDocs, Result) ->
-	parse_record_value(IdTail, ValueTail, ChildDocs, Result);
-parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], ChildDocs, Result) ->
-	{ChildValue, GrandChildrenDocs} = parse_value(FieldValue),
-	parse_record_value(IdTail, ValueTail, GrandChildrenDocs ++ ChildDocs, Result ++ [FieldId, ChildValue]).
+parse_record_value([], [], DocList, Result) ->
+	{list_to_tuple(Result), DocList};
+parse_record_value([_FieldId|IdTail], [undefined|ValueTail], DocList, Result) ->
+	parse_record_value(IdTail, ValueTail, DocList, Result);
+parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], DocList, Result) ->
+	{ChildValue, UpdatedDocList} = parse_value(FieldValue, DocList),
+	parse_record_value(IdTail, ValueTail, UpdatedDocList, Result ++ [FieldId, ChildValue]).
 
-parse_list_values([], ChildDocs, Result) ->
-	{Result, ChildDocs};
-parse_list_values([Value|Tail], ChildDocs, Result) ->
-	{ChildValue, GrandChildrenDocs} = parse_value(Value),
-	parse_list_values(Tail, GrandChildrenDocs ++ ChildDocs, Result ++ [ChildValue]).
+parse_list_values([], DocList, Result) ->
+	{Result, DocList};
+parse_list_values([Value|Tail], DocList, Result) ->
+	{ChildValue, UpdatedDocList} = parse_value(Value, DocList),
+	parse_list_values(Tail, UpdatedDocList, Result ++ [ChildValue]).
