@@ -151,6 +151,25 @@ record_has_id_false_test_() ->
 	     false = mongrel_mapper:has_id({bar,1,2})
      end}.
 	
+get_id_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+	     3 = mongrel_mapper:get_id(#bar{'_id'=3})
+     end}.
+
+get_undefined_id_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     undefined = mongrel_mapper:get_id(#foo{})
+     end}.
+	
+	
 map_basic_test_() ->
 	{setup,
      fun setup/0,

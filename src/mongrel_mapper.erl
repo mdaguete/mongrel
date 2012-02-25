@@ -26,6 +26,7 @@
 		 get_mapping/1,
 		 is_mapped/1,
 		 has_id/1,
+		 get_id/1,
 		 map/1]).
 
 %% gen_server callbacks
@@ -78,6 +79,20 @@ has_id(RecordName) when is_atom(RecordName) ->
 has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
+
+get_id(Record) ->
+	[RecordName|FieldValues] = tuple_to_list(Record),
+	FieldIds = get_mapping(RecordName),
+	Fields = lists:zip(FieldIds, FieldValues),
+	GetId = fun({FieldId, FieldValue}, Result) ->
+					case FieldId of
+						'_id' ->
+							FieldValue;
+						_ ->
+							Result
+					end
+			end,
+	lists:foldl(GetId, undefined, Fields).
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
@@ -142,7 +157,7 @@ parse_mapped_tuple(Value) ->
 		true ->
 			[RecordName|_FieldValues] = tuple_to_list(Value),
 			{ChildDoc, GrandChildren} = parse_record_value(Value),
-			{{'$type', RecordName, '$id', 8}, GrandChildren ++ [{RecordName, ChildDoc}]}
+			{{'$type', RecordName, '$id', get_id(Value)}, GrandChildren ++ [{RecordName, ChildDoc}]}
 	end.
 
 parse_record_value(Record) ->
