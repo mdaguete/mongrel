@@ -181,3 +181,14 @@ map_nested_doc_test_() ->
 		 Foo = #foo{bar=3, baz= #baz{}},
 	     [{foo, {bar, 3, baz, {x, 2, y, 8}}}] = mongrel_mapper:map(Foo)
      end}.
+
+map_nested_doc_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+		 Foo = #foo{bar= #bar{'_id'=7}, baz=9},
+	     [{bar, {'_id', 7}}, {foo, {bar, {'$type', bar, '$id', 7}, baz, 9}}] = mongrel_mapper:map(Foo)
+     end}.

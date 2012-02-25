@@ -131,9 +131,19 @@ code_change(_OldVersion, State, _Extra) ->
 
 %% Internal functions
 parse_value(Value) when is_tuple(Value) ->
-	parse_record_value(Value);
+	parse_mapped_tuple(Value);
 parse_value(Value) ->
 	{Value, []}.
+
+parse_mapped_tuple(Value) ->
+	case has_id(Value) of
+		false ->
+			parse_record_value(Value);
+		true ->
+			[RecordName|_FieldValues] = tuple_to_list(Value),
+			{ChildDoc, GrandChildren} = parse_record_value(Value),
+			{{'$type', RecordName, '$id', 8}, GrandChildren ++ [{RecordName, ChildDoc}]}
+	end.
 
 parse_record_value(Record) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
@@ -149,6 +159,3 @@ parse_record_value([_FieldId|IdTail], [undefined|ValueTail], ChildDocs, Result) 
 parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], ChildDocs, Result) ->
 	{ChildValue, GrandChildrenDocs} = parse_value(FieldValue),
 	parse_record_value(IdTail, ValueTail, GrandChildrenDocs ++ ChildDocs, Result ++ [FieldId, ChildValue]).
-
-	
-	
