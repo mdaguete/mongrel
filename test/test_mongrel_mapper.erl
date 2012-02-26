@@ -204,7 +204,7 @@ map_nested_doc_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
 		 Foo = #foo{bar=3, baz= #baz{}},
-	     [{foo, {bar, 3, baz, {x, 2, y, 8}}}] = mongrel_mapper:map(Foo)
+	     [{foo, {bar, 3, baz, {'$type', baz, x, 2, y, 8}}}] = mongrel_mapper:map(Foo)
      end}.
 
 map_nested_doc_with_id_test_() ->
@@ -259,7 +259,7 @@ doc_with_complex_list_2_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
 		 Foo = #foo{bar=[1,2,#bar{'_id'=3}, #baz{}], baz=5},
-	     [{bar, {'_id', 3}}, {foo, {bar, [1,2, {'$type', bar, '$id', 3}, {x, 2, y, 8}], baz, 5}}] = mongrel_mapper:map(Foo)
+	     [{bar, {'_id', 3}}, {foo, {bar, [1,2, {'$type', bar, '$id', 3}, {'$type', baz, x, 2, y, 8}], baz, 5}}] = mongrel_mapper:map(Foo)
      end}.
 
 doc_with_non_record_tuple_test_() ->
@@ -291,7 +291,7 @@ doc_with_deep_nested_records_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{baz=#foo{baz=#foo{bar=3}}},
-	     [{foo, {baz, {baz, {bar, 3, baz, 4}}}}] = mongrel_mapper:map(Foo)
+	     [{foo, {baz, {'$type', foo, baz, {'$type', foo, bar, 3, baz, 4}}}}] = mongrel_mapper:map(Foo)
      end}.
 	
 doc_with_deep_nested_records_with_ids_test_() ->
