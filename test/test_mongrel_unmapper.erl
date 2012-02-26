@@ -110,3 +110,26 @@ unmap_nested_doc_by_id_test_() ->
 			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {'$type', buzz, '$id', -123}}, GetDocById),
 			  BarExpected = Bar
      end}.
+
+unmap_doc_with_tuple_value_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  BarExpected = #bar{'_id' = 1234, z = {<<1,2,3>>}},
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {<<1,2,3>>}}, undefined),
+			  BarExpected = Bar
+     end}.
+
+unmap_doc_with_basic_list_value_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  BarExpected = #bar{'_id' = 1234, z = [1,2,3]},
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2,3]}, undefined),
+			  BarExpected = Bar
+     end}.
+	
