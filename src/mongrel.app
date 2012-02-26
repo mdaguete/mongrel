@@ -1,8 +1,8 @@
 {application, mongrel,
- [{description, "Record/Document Mapper for MongoDB"},
+ [{description, "MongoDB Record/Document Mapper"},
   {vsn, "0.0.2"},
-  {modules, [mongrel_app, mongrel_types]},
-  {registered, []},
+  {modules, [mongrel, mongrel_app, mongrel_mapper, mongrel_sup, mongrel_types]},
+  {registered, [mongrel_sup, mongrel_mapper]},
   {applications, [kernel, stdlib, mongodb]},
   {mod, {mongrel_app, []}}
  ]}.
