@@ -87,7 +87,9 @@ get_field(Record, Field) ->
 	FieldIds = get_mapping(RecordName),
 	get_field(FieldIds, FieldValues, Field).
 
-set_field(Record, FieldId, FieldValue, _Callback) ->
+set_field(Record, FieldId, {'$type', Collection, '$id', Id}, MapReferenceFun) ->
+	set_field(Record, FieldId, MapReferenceFun(Collection, Id), MapReferenceFun);
+set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 	[RecordName|RecordList] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	UpdatedRecordList = set_field(RecordList, FieldIds, FieldId, FieldValue, []),

@@ -31,14 +31,38 @@ setup() ->
 cleanup(_) ->
 	ets:delete(myets).
 
-get_field_test_() ->
+set_field_test_() ->
     {setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  Foo1 = #foo{bar=123},
-			  Foo1 = mongrel_mapper:set_field(#foo{}, bar, 123, ?MODULE),
+			  Foo1 = mongrel_mapper:set_field(#foo{}, bar, 123, undefined),
 			  Foo2 = Foo1#foo{baz=456},
 			  Foo2 = mongrel_mapper:set_field(Foo1, baz, 456, ?MODULE)
      end}.
+
+set_field_with_reference_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			  BazExpected = #baz{x=#buzz{'_id'=7, w = 3, z = 27}},
+			  GetBuzz = fun(buzz, 7) ->
+								#buzz{'_id'=7, w = 3, z = 27}
+						end,
+			  Baz = mongrel_mapper:set_field(#baz{}, x, {'$type', buzz, '$id', 7}, GetBuzz),
+			  BazExpected = Baz
+     end}.
+	
+set_non_existent_field_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			  ?assertError(_, mongrel_mapper:set_field(#baz{}, z, 123, undefined))
+     end}.
+	
