@@ -27,7 +27,8 @@
 		 has_id/1,
 		 get_field/2,
 		 set_field/4,
-		 map/1]).
+		 map/1,
+		 unmap/3]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -100,6 +101,12 @@ map(Record) ->
 	{Document, ChildDocs} = parse_record_value(Record, []),
 	AllDocs = ChildDocs ++ [{RecordName, Document}],
 	remove_repeat_docs(AllDocs, []).
+
+unmap(RecordName, Tuple, MapReferenceFun) ->
+	FieldIds = mongrel_mapper:get_mapping(RecordName),
+	TupleList = tuple_to_list(Tuple),
+	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
+	unmap_list(TupleList, MapReferenceFun, InitialTuple).
 
 
 %% Server functions
@@ -215,3 +222,8 @@ set_field([_FieldValue|ValuesTail], [FieldId|_TailsList], FieldId, NewFieldValue
 	Result ++ [NewFieldValue] ++ ValuesTail;
 set_field([FieldValue|ValuesTail], [_FieldId|TailsList], FieldId, NewFieldValue, Result) ->
 	set_field(ValuesTail, TailsList, FieldId, NewFieldValue, Result ++ [FieldValue]).
+
+unmap_list([] = _TupleList, _MapReferenceFun, ResultTuple) ->
+	ResultTuple;
+unmap_list([FieldId, FieldValue|Tail] = _TupleList, MapReferenceFun, ResultTuple) ->
+	unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, FieldValue, MapReferenceFun)).

@@ -20,7 +20,7 @@
 
 %% records used for testing.
 -record(foo, {bar, baz=4}).
--record(bar, {'_id'}).
+-record(bar, {'_id', x, z=3}).
 -record(baz, {x=2, y=8}).
 -record(buzz, {'_id', w, z}).
 
@@ -64,5 +64,15 @@ set_non_existent_field_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
 			  ?assertError(_, mongrel_mapper:set_field(#baz{}, z, 123, undefined))
+     end}.
+	
+unmap_basic_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  BarExpected = #bar{'_id' = 1234, z = <<1>>},
+			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z, <<1>>}, undefined)
      end}.
 	
