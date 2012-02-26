@@ -152,7 +152,7 @@ record_has_id_false_test_() ->
 	     false = mongrel_mapper:has_id({bar,1,2})
      end}.
 	
-get_id_test_() ->
+get_field_test_() ->
     {setup,
      fun setup/0,
      fun cleanup/1,
@@ -161,25 +161,15 @@ get_id_test_() ->
 	     3 = mongrel_mapper:get_field(#bar{'_id'=3}, '_id')
      end}.
 
-get_undefined_id_test_() ->
+get_nonexistent_field_test_() ->
     {setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
-	     undefined = mongrel_mapper:get_field(#foo{}, '_id')
+	     ?assertError(_, mongrel_mapper:get_field(#foo{}, '_id'))
      end}.
 
-get_field_test_() ->
-    {setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
-	     4 = mongrel_mapper:get_field(#foo{}, baz)
-     end}.
-	
-	
 map_basic_test_() ->
 	{setup,
      fun setup/0,

@@ -83,16 +83,7 @@ has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 get_field(Record, Field) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
-	Fields = lists:zip(FieldIds, FieldValues),
-	GetId = fun({FieldId, FieldValue}, Result) ->
-					case FieldId of
-						Field ->
-							FieldValue;
-						_ ->
-							Result
-					end
-			end,
-	lists:foldl(GetId, undefined, Fields).
+	get_field(FieldIds, FieldValues, Field).
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
@@ -192,3 +183,8 @@ parse_list_values([], DocList, Result) ->
 parse_list_values([Value|Tail], DocList, Result) ->
 	{ChildValue, UpdatedDocList} = parse_value(Value, DocList),
 	parse_list_values(Tail, UpdatedDocList, Result ++ [ChildValue]).
+
+get_field([FieldId|_IdTail], [FieldValue|_ValuesTail], FieldId) ->
+	FieldValue;
+get_field([_FieldIdHead|IdTail], [_FieldValueHead|ValuesTail], FieldId) ->
+	get_field(IdTail, ValuesTail, FieldId).
