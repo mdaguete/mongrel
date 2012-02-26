@@ -76,3 +76,14 @@ unmap_basic_test_() ->
 			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z, <<1>>}, undefined)
      end}.
 	
+unmap_nested_doc_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  BarExpected = #bar{'_id' = 1234, z = #foo{baz=5}},
+			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z, {'$type', foo, baz, 5}}, undefined)
+     end}.
+	
