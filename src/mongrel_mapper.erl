@@ -230,6 +230,10 @@ unmap_list([] = _TupleList, _MapReferenceFun, ResultTuple) ->
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
+		['$type', Type, '$id', Id] ->
+			NestedDoc = MapReferenceFun(Type, Id),
+			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
+			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
 		['$type', Type|ValueTail] ->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));

@@ -97,3 +97,16 @@ unmap_deep_nested_doc_test_() ->
 			  BarExpected = #bar{'_id' = 1234, z = #foo{baz=#foo{baz=5}}},
 			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z,{'$type', foo, baz, {'$type', foo, baz, 5}}}, undefined)
      end}.
+
+unmap_nested_doc_by_id_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  mongrel_mapper:add_mapping(?mapping(buzz)),
+			  BarExpected = #bar{'_id' = 1234, z = #buzz{'_id'=-123, w=1, z=2}},
+			  GetDocById = fun(buzz, -123) -> {'_id', -123, w, 1, z, 2} end,
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {'$type', buzz, '$id', -123}}, GetDocById),
+			  BarExpected = Bar
+     end}.
