@@ -277,6 +277,17 @@ doc_with_non_record_tuple_test_() ->
 	     [{foo, {bar, Bin, baz, <<"hello, world">>}}] = mongrel_mapper:map(Foo)
      end}.
 	
+doc_with_non_record_tuple2_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
+		 Tuple = {1,2,3,4},
+		 Foo = #foo{bar=Tuple, baz= <<"hello, world">>},
+	     [{foo, {bar, Tuple, baz, <<"hello, world">>}}] = mongrel_mapper:map(Foo)
+     end}.
+	
 doc_with_deep_nested_records_test_() ->
 	{setup,
      fun setup/0,
