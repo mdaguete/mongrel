@@ -19,10 +19,12 @@
 -module(mongrel).
 
 %% API
--export([]).
+-export([insert/1]).
 
 %% External functions
-
+insert(Record) ->
+	Documents = mongrel_mapper:map(Record),
+	[mongo:insert(Collection, Document) || {Collection, Document} <- Documents].
 
 
 %% Internal functions

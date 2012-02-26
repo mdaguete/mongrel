@@ -67,7 +67,9 @@ is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 			false;
 		[{RecordName, FieldIds}] ->
 			length(FieldIds) =:= length(FieldValues)
-	end.
+	end;
+is_mapped(_) ->
+	false.
 
 has_id(RecordName) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),

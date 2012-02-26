@@ -17,3 +17,5 @@
 -define(md5(X), mongrel_types:md5(X)).
 
 -define(mapping(Record), {Record, record_info(fields, Record)}).
+
+-define(id(), '_id'=mongodb_app:gen_objectid()).
