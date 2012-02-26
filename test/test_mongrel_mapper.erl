@@ -116,6 +116,14 @@ is_mapped_record_false_test_() ->
 	     false = mongrel_mapper:is_mapped({foo, 1, 3, 4})
      end}.
 
+is_mapped_non_atom_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     false = mongrel_mapper:is_mapped({<<1,2,3>>})
+     end}.
+	
 has_id_false_test_() ->
     {setup,
      fun setup/0,
@@ -210,6 +218,17 @@ map_nested_doc_with_id_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 		 Foo = #foo{bar= #bar{'_id'=7}, baz=9},
 	     [{bar, {'_id', 7}}, {foo, {bar, {'$type', bar, '$id', 7}, baz, 9}}] = mongrel_mapper:map(Foo)
+     end}.
+
+map_ignore_repeated_nested_doc_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+		 Foo = #foo{bar= #bar{'_id'=7}, baz= #bar{'_id'=7}},
+	     [{bar, {'_id', 7}}, {foo, {bar, {'$type', bar, '$id', 7}, baz, {'$type', bar, '$id', 7}}}] = mongrel_mapper:map(Foo)
      end}.
 
 doc_with_simple_list_test_() ->

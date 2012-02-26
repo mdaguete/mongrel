@@ -89,7 +89,8 @@ get_field(Record, Field) ->
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
 	{Document, ChildDocs} = parse_record_value(Record, []),
-	ChildDocs ++ [{RecordName, Document}].
+	AllDocs = ChildDocs ++ [{RecordName, Document}],
+	remove_repeat_docs(AllDocs, []).
 
 
 %% Server functions
@@ -183,3 +184,20 @@ get_field([FieldId|_IdTail], [FieldValue|_ValuesTail], FieldId) ->
 	FieldValue;
 get_field([_FieldIdHead|IdTail], [_FieldValueHead|ValuesTail], FieldId) ->
 	get_field(IdTail, ValuesTail, FieldId).
+
+remove_repeat_docs([], Result) ->
+	Result;
+remove_repeat_docs([Doc|DocTail], Result) ->
+	case doc_in_list(Doc, Result) of
+		true ->
+			remove_repeat_docs(DocTail, Result);
+		false ->
+			remove_repeat_docs(DocTail, Result ++ [Doc])
+	end.
+
+doc_in_list(_Doc, []) ->
+	false;
+doc_in_list(Doc, [Doc|_DocTail]) ->
+	true;
+doc_in_list(Doc, [_DocHead|DocTail]) ->
+	doc_in_list(Doc, DocTail).
