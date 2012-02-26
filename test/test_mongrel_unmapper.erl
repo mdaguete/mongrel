@@ -132,4 +132,14 @@ unmap_doc_with_basic_list_value_test_() ->
 			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2,3]}, undefined),
 			  BarExpected = Bar
      end}.
-	
+
+unmap_doc_with_complex_list_value_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  BarExpected = #bar{'_id' = 1234, z = [1,2, #foo{baz=0}]},
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2, {'$type', foo, baz, 0}]}, undefined),
+			  BarExpected = Bar
+     end}.

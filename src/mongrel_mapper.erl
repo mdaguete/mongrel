@@ -227,6 +227,9 @@ set_field([FieldValue|ValuesTail], [_FieldId|TailsList], FieldId, NewFieldValue,
 
 unmap_list([] = _TupleList, _MapReferenceFun, ResultTuple) ->
 	ResultTuple;
+unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_list(FieldValue) ->
+	ListValue = unmap_list_value(FieldValue, MapReferenceFun, []),
+	unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, ListValue, MapReferenceFun));
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
@@ -242,3 +245,11 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tup
 	end;
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) ->
 	unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, FieldValue, MapReferenceFun)).
+
+unmap_list_value([], _MapReferenceFun, Result) ->
+	Result;
+unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
+	true = Value,
+	{};
+unmap_list_value([Value|Tail], MapReferenceFun, Result) ->
+	unmap_list_value(Tail, MapReferenceFun, Result ++ [Value]).
