@@ -10,15 +10,13 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-
 -module(test_mongrel_mapper).
-
 
 %% Include files
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("mongrel_macros.hrl").
 
-%% record used for testing.
+%% records used for testing.
 -record(foo, {bar, baz=4}).
 -record(bar, {'_id'}).
 -record(baz, {x=2, y=8}).

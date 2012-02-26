@@ -26,6 +26,7 @@
 		 is_mapped/1,
 		 has_id/1,
 		 get_field/2,
+		 set_field/4,
 		 map/1]).
 
 %% gen_server callbacks
@@ -85,6 +86,12 @@ get_field(Record, Field) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	get_field(FieldIds, FieldValues, Field).
+
+set_field(Record, FieldId, FieldValue, _Callback) ->
+	[RecordName|RecordList] = tuple_to_list(Record),
+	FieldIds = get_mapping(RecordName),
+	UpdatedRecordList = set_field(RecordList, FieldIds, FieldId, FieldValue, []),
+	list_to_tuple([RecordName|UpdatedRecordList]).
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
@@ -201,3 +208,8 @@ doc_in_list(Doc, [Doc|_DocTail]) ->
 	true;
 doc_in_list(Doc, [_DocHead|DocTail]) ->
 	doc_in_list(Doc, DocTail).
+
+set_field([_FieldValue|ValuesTail], [FieldId|_TailsList], FieldId, NewFieldValue, Result) ->
+	Result ++ [NewFieldValue] ++ ValuesTail;
+set_field([FieldValue|ValuesTail], [_FieldId|TailsList], FieldId, NewFieldValue, Result) ->
+	set_field(ValuesTail, TailsList, FieldId, NewFieldValue, Result ++ [FieldValue]).
