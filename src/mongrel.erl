@@ -19,13 +19,22 @@
 -module(mongrel).
 
 %% API
--export([insert/1]).
+-export([insert/1,
+		 find_one/1]).
 
 %% External functions
 insert(Record) ->
 	Documents = mongrel_mapper:map(Record),
 	[mongo:insert(Collection, Document) || {Collection, Document} <- Documents].
 
+find_one(RecordSelector) ->
+	[{Collection, Selector}] = mongrel_mapper:map(RecordSelector),
+	{Res} = mongo:find_one(Collection, Selector),
+	CallbackFunc = fun(Coll, Id) ->
+						   {Reference} = mongo:find_one(Coll, Id),
+						   Reference
+				   end,
+	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
 
 %% Internal functions
 

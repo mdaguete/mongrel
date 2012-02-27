@@ -239,6 +239,10 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_lis
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
+		['$type', Type, '$id', Id] when is_atom(Type) ->
+			NestedDoc = MapReferenceFun(Type, Id),
+			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
+			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
 		['$type', Type, '$id', Id] ->
 			NestedDoc = MapReferenceFun(list_to_atom(unicode:characters_to_list(Type)), Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
@@ -265,7 +269,7 @@ unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
 		_ ->
-			unmap_list(Tail, MapReferenceFun, Result ++ [Value])
+			unmap_list_value(Tail, MapReferenceFun, Result ++ [Value])
 	end;
 unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_list(Value) ->
 	ListValue = unmap_list_value(Value, MapReferenceFun, []),
