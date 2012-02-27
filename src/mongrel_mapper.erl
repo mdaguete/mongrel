@@ -102,11 +102,14 @@ map(Record) ->
 	AllDocs = ChildDocs ++ [{RecordName, Document}],
 	remove_repeat_docs(AllDocs, []).
 
-unmap(RecordName, Tuple, MapReferenceFun) ->
-	FieldIds = mongrel_mapper:get_mapping(RecordName),
+unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
+	FieldIds = get_mapping(RecordName),
 	TupleList = tuple_to_list(Tuple),
 	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
-	unmap_list(TupleList, MapReferenceFun, InitialTuple).
+	unmap_list(TupleList, MapReferenceFun, InitialTuple);
+unmap(RecordName, Tuple, MapReferenceFun) when is_binary(RecordName) ->
+	unmap(erlang:list_to_atom(unicode:characters_to_list(RecordName)), Tuple, MapReferenceFun).
+
 
 
 %% Server functions
@@ -237,7 +240,7 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tup
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
 		['$type', Type, '$id', Id] ->
-			NestedDoc = MapReferenceFun(Type, Id),
+			NestedDoc = MapReferenceFun(list_to_atom(unicode:characters_to_list(Type)), Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
 		['$type', Type|ValueTail] ->
@@ -255,7 +258,7 @@ unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
 	FieldValueList = tuple_to_list(Value),
 	case FieldValueList of
 		['$type', Type, '$id', Id] ->
-			NestedDoc = MapReferenceFun(Type, Id),
+			NestedDoc = MapReferenceFun(list_to_atom(unicode:characters_to_list(Type)), Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
 		['$type', Type|ValueTail] ->
