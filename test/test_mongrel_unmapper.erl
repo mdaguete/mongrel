@@ -63,7 +63,10 @@ set_non_existent_field_test_() ->
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
-			  ?assertError(_, mongrel_mapper:set_field(#baz{}, z, 123, undefined))
+			  % setting a non-existent field should be ignored. This is to allow
+			  % the storing of information in a document that may be important
+			  % but is not needed by the Erlang application (e.g. _id)
+			  #baz{} = mongrel_mapper:set_field(#baz{}, z, 123, undefined)
      end}.
 	
 unmap_basic_test_() ->

@@ -220,6 +220,9 @@ doc_in_list(Doc, [Doc|_DocTail]) ->
 doc_in_list(Doc, [_DocHead|DocTail]) ->
 	doc_in_list(Doc, DocTail).
 
+
+set_field([], [], _FieldId, _NewFieldValue, Result) ->
+	Result;
 set_field([_FieldValue|ValuesTail], [FieldId|_TailsList], FieldId, NewFieldValue, Result) ->
 	Result ++ [NewFieldValue] ++ ValuesTail;
 set_field([FieldValue|ValuesTail], [_FieldId|TailsList], FieldId, NewFieldValue, Result) ->
