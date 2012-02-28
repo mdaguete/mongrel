@@ -49,14 +49,14 @@ start_link(EtsTableId) ->
 
 add_mapping({RecordName, FieldIds}) when is_atom(RecordName) ->
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
-	gen_server:call(?SERVER, {add_mapping, {RecordName, FieldIds}}, infinity).
+	server_call(add_mapping, {RecordName, FieldIds}).
 
 get_mapping(RecordName) when is_atom(RecordName) ->
-	[{RecordName, FieldIds}] = gen_server:call(?SERVER, {get_mapping, RecordName}, infinity),
+	[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 	FieldIds.
 
 is_mapped(RecordName) when is_atom(RecordName) ->
-	case gen_server:call(?SERVER, {get_mapping, RecordName}, infinity) of
+	case server_call(get_mapping, RecordName) of
 		[] ->
 			false;
 		[{RecordName, _}] ->
@@ -64,7 +64,7 @@ is_mapped(RecordName) when is_atom(RecordName) ->
 	end;
 is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
-	case gen_server:call(?SERVER, {get_mapping, RecordName}, infinity) of
+	case server_call(get_mapping, RecordName) of
 		[] ->
 			false;
 		[{RecordName, FieldIds}] ->
@@ -156,6 +156,9 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %% Internal functions
+server_call(Command, Args) ->
+	gen_server:call(?SERVER, {Command, Args}, infinity).
+
 parse_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
