@@ -25,17 +25,18 @@
 
 %% External functions
 insert(Record) ->
-	Documents = mongrel_mapper:map(Record),
-	[mongo:insert(Collection, Document) || {Collection, Document} <- Documents].
+	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
+	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
+	mongo:insert(Collection, Document).
 
 insert_all(Records) ->
 	[insert(Record) || Record <- Records].
 
 find_one(RecordSelector) ->
-	[{Collection, Selector}] = mongrel_mapper:map(RecordSelector),
+	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
 	{Res} = mongo:find_one(Collection, Selector),
 	CallbackFunc = fun(Coll, Id) ->
-						   {Reference} = mongo:find_one(Coll, Id),
+						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
 						   Reference
 				   end,
 	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
