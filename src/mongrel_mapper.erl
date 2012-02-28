@@ -105,9 +105,7 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	TupleList = tuple_to_list(Tuple),
 	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
-	unmap_list(TupleList, MapReferenceFun, InitialTuple);
-unmap(RecordName, Tuple, MapReferenceFun) when is_binary(RecordName) ->
-	unmap(erlang:list_to_atom(unicode:characters_to_list(RecordName)), Tuple, MapReferenceFun).
+	unmap_list(TupleList, MapReferenceFun, InitialTuple).
 
 
 
@@ -227,11 +225,7 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tup
 			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
-		['$type', Type, '$id', Id] ->
-			NestedDoc = MapReferenceFun(list_to_atom(unicode:characters_to_list(Type)), Id),
-			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
-			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
-		['$type', Type|ValueTail] ->
+		['$type', Type|ValueTail] when is_atom(Type) ->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
 		_ ->
@@ -245,11 +239,11 @@ unmap_list_value([], _MapReferenceFun, Result) ->
 unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
 	FieldValueList = tuple_to_list(Value),
 	case FieldValueList of
-		['$type', Type, '$id', Id] ->
-			NestedDoc = MapReferenceFun(list_to_atom(unicode:characters_to_list(Type)), Id),
+		['$type', Type, '$id', Id] when is_atom(Type) ->
+			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
-		['$type', Type|ValueTail] ->
+		['$type', Type|ValueTail] when is_atom(Type) ->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
 		_ ->
