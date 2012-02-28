@@ -157,28 +157,28 @@ code_change(_OldVersion, State, _Extra) ->
 server_call(Command, Args) ->
 	gen_server:call(?SERVER, {Command, Args}, infinity).
 
-parse_value(Value, DocList) when is_tuple(Value) ->
+map_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
-			parse_mapped_tuple(Value, DocList);
+			map_tuple(Value, DocList);
 		false ->
 			{Value, DocList}
 	end;
-parse_value(Value, DocList) when is_list(Value) ->
-	parse_list_values(Value, DocList, []);
-parse_value(Value, DocList) ->
+map_value(Value, DocList) when is_list(Value) ->
+	map_list(Value, DocList, []);
+map_value(Value, DocList) ->
 	{Value, DocList}.
 
-parse_mapped_tuple(Value, DocList) ->
-	[RecordName|_FieldValues] = tuple_to_list(Value),
-	case has_id(Value) of
+map_tuple(Record, DocList) ->
+	[RecordName|_FieldValues] = tuple_to_list(Record),
+	case has_id(Record) of
 		false ->
-			{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
+			{ChildDoc, UpdatedDocList} = map_record(Record, DocList),
 			ChildDocList = ['$type', RecordName] ++ tuple_to_list(ChildDoc),
 			{list_to_tuple(ChildDocList), UpdatedDocList};
 		true ->
-			{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
-			{{'$type', RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
+			{ChildDoc, UpdatedDocList} = map_record(Record, DocList),
+			{{'$type', RecordName, '$id', get_field(Record, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
 	end.
 
 map_record(Record, DocList) ->
@@ -193,14 +193,14 @@ map_record([], [], DocList, Result) ->
 map_record([_FieldId|IdTail], [undefined|ValueTail], DocList, Result) ->
 	map_record(IdTail, ValueTail, DocList, Result);
 map_record([FieldId|IdTail], [FieldValue|ValueTail], DocList, Result) ->
-	{ChildValue, UpdatedDocList} = parse_value(FieldValue, DocList),
+	{ChildValue, UpdatedDocList} = map_value(FieldValue, DocList),
 	map_record(IdTail, ValueTail, UpdatedDocList, Result ++ [FieldId, ChildValue]).
 
-parse_list_values([], DocList, Result) ->
+map_list([], DocList, Result) ->
 	{Result, DocList};
-parse_list_values([Value|Tail], DocList, Result) ->
-	{ChildValue, UpdatedDocList} = parse_value(Value, DocList),
-	parse_list_values(Tail, UpdatedDocList, Result ++ [ChildValue]).
+map_list([Value|Tail], DocList, Result) ->
+	{ChildValue, UpdatedDocList} = map_value(Value, DocList),
+	map_list(Tail, UpdatedDocList, Result ++ [ChildValue]).
 
 get_field([FieldId|_IdTail], [FieldValue|_ValuesTail], FieldId) ->
 	FieldValue;
