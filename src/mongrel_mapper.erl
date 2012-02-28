@@ -98,7 +98,7 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
-	{Document, ChildDocs} = parse_record_value(Record, []),
+	{Document, ChildDocs} = map_record(Record, []),
 	{{RecordName, Document}, ChildDocs}.
 
 unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
@@ -173,27 +173,28 @@ parse_mapped_tuple(Value, DocList) ->
 	[RecordName|_FieldValues] = tuple_to_list(Value),
 	case has_id(Value) of
 		false ->
-			{ChildDoc, UpdatedDocList} = parse_record_value(Value, DocList),
+			{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
 			ChildDocList = ['$type', RecordName] ++ tuple_to_list(ChildDoc),
 			{list_to_tuple(ChildDocList), UpdatedDocList};
 		true ->
-			{ChildDoc, UpdatedDocList} = parse_record_value(Value, DocList),
+			{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
 			{{'$type', RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
 	end.
 
-parse_record_value(Record, DocList) ->
+map_record(Record, DocList) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	Result = [],
-	parse_record_value(FieldIds, FieldValues, DocList, Result).
+	{DocAsList, ChildDocs} = map_record(FieldIds, FieldValues, DocList, Result),
+	{list_to_tuple(DocAsList), ChildDocs}.
 
-parse_record_value([], [], DocList, Result) ->
-	{list_to_tuple(Result), DocList};
-parse_record_value([_FieldId|IdTail], [undefined|ValueTail], DocList, Result) ->
-	parse_record_value(IdTail, ValueTail, DocList, Result);
-parse_record_value([FieldId|IdTail], [FieldValue|ValueTail], DocList, Result) ->
+map_record([], [], DocList, Result) ->
+	{Result, DocList};
+map_record([_FieldId|IdTail], [undefined|ValueTail], DocList, Result) ->
+	map_record(IdTail, ValueTail, DocList, Result);
+map_record([FieldId|IdTail], [FieldValue|ValueTail], DocList, Result) ->
 	{ChildValue, UpdatedDocList} = parse_value(FieldValue, DocList),
-	parse_record_value(IdTail, ValueTail, UpdatedDocList, Result ++ [FieldId, ChildValue]).
+	map_record(IdTail, ValueTail, UpdatedDocList, Result ++ [FieldId, ChildValue]).
 
 parse_list_values([], DocList, Result) ->
 	{Result, DocList};
