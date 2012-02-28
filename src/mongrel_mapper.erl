@@ -161,13 +161,12 @@ map_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
 			[RecordName|_FieldValues] = tuple_to_list(Value),
+			{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
 			case has_id(Value) of
 				false ->
-					{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
 					ChildDocList = ['$type', RecordName] ++ tuple_to_list(ChildDoc),
 					{list_to_tuple(ChildDocList), UpdatedDocList};
 				true ->
-					{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
 					{{'$type', RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
 			end;
 		false ->
