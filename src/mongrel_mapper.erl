@@ -99,7 +99,7 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
 	{Document, ChildDocs} = parse_record_value(Record, []),
-	ChildDocs ++ [{RecordName, Document}].
+	{{RecordName, Document}, ChildDocs}.
 
 unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
