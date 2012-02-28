@@ -30,11 +30,11 @@ test() ->
 	{ok, Conn} = mongo:connect(Host),
 	
 	% Use the mongrel insert function and the MongoDB driver to write the book record to the database
-	mongo:do(safe, master, Conn, mongrel_test, fun() ->
+	{ok, _} = mongo:do(safe, master, Conn, mongrel_test, fun() ->
 													   mongrel:insert(BookWithReviews)
 			 end),
 	
 	mongo:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:find_one(#book{})
+													   mongrel:find_one(#book{title= {'$ne', <<"War and Peace">>}})
 			 end).
 

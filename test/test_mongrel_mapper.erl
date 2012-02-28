@@ -218,17 +218,6 @@ map_nested_doc_with_id_test_() ->
 	     [{bar, {'_id', 7}}, {foo, {bar, {'$type', bar, '$id', 7}, baz, 9}}] = mongrel_mapper:map(Foo)
      end}.
 
-map_ignore_repeated_nested_doc_with_id_test_() ->
-	{setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
-	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
-		 Foo = #foo{bar= #bar{'_id'=7}, baz= #bar{'_id'=7}},
-	     [{bar, {'_id', 7}}, {foo, {bar, {'$type', bar, '$id', 7}, baz, {'$type', bar, '$id', 7}}}] = mongrel_mapper:map(Foo)
-     end}.
-
 doc_with_simple_list_test_() ->
 	{setup,
      fun setup/0,
