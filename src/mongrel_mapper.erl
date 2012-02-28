@@ -160,7 +160,16 @@ server_call(Command, Args) ->
 map_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
-			map_tuple(Value, DocList);
+			[RecordName|_FieldValues] = tuple_to_list(Value),
+			case has_id(Value) of
+				false ->
+					{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
+					ChildDocList = ['$type', RecordName] ++ tuple_to_list(ChildDoc),
+					{list_to_tuple(ChildDocList), UpdatedDocList};
+				true ->
+					{ChildDoc, UpdatedDocList} = map_record(Value, DocList),
+					{{'$type', RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
+			end;
 		false ->
 			{Value, DocList}
 	end;
@@ -168,18 +177,6 @@ map_value(Value, DocList) when is_list(Value) ->
 	map_list(Value, DocList, []);
 map_value(Value, DocList) ->
 	{Value, DocList}.
-
-map_tuple(Record, DocList) ->
-	[RecordName|_FieldValues] = tuple_to_list(Record),
-	case has_id(Record) of
-		false ->
-			{ChildDoc, UpdatedDocList} = map_record(Record, DocList),
-			ChildDocList = ['$type', RecordName] ++ tuple_to_list(ChildDoc),
-			{list_to_tuple(ChildDocList), UpdatedDocList};
-		true ->
-			{ChildDoc, UpdatedDocList} = map_record(Record, DocList),
-			{{'$type', RecordName, '$id', get_field(Record, '_id')}, UpdatedDocList ++ [{RecordName, ChildDoc}]}
-	end.
 
 map_record(Record, DocList) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
