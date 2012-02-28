@@ -20,12 +20,16 @@
 
 %% API
 -export([insert/1,
+		 insert_all/1,
 		 find_one/1]).
 
 %% External functions
 insert(Record) ->
 	Documents = mongrel_mapper:map(Record),
 	[mongo:insert(Collection, Document) || {Collection, Document} <- Documents].
+
+insert_all(Records) ->
+	[insert(Record) || Record <- Records].
 
 find_one(RecordSelector) ->
 	[{Collection, Selector}] = mongrel_mapper:map(RecordSelector),

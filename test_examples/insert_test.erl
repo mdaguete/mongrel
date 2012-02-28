@@ -21,9 +21,10 @@ test() ->
 	% Create a sample author and a book record with two reviews.
 	% Notice we use a macro for assigning an _id
 	Author = #author{?id(), last_name= <<"Tolstoy">>},
-	Book = #book{?id(), title= <<"War and Peace 2">>, author=Author},
-	BookWithReviews = Book#book{reviews = [#review{star_rating=1, comment= <<"Turgid old nonsense">>}, 
+	Book1 = #book{?id(), title= <<"War and Peace">>, author=Author},
+	BookWithReviews = Book1#book{reviews = [#review{star_rating=1, comment= <<"Turgid old nonsense">>}, 
 										   #review{star_rating=5}]},
+	Book2 = #book{?id(), title= <<"Anna Karenina">>, author=Author},
 	
 	% Connect to MongoDB
 	Host = {localhost, 27017},
@@ -31,7 +32,7 @@ test() ->
 	
 	% Use the mongrel insert function and the MongoDB driver to write the book record to the database
 	{ok, _} = mongo:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:insert(BookWithReviews)
+													   mongrel:insert_all([BookWithReviews, Book2])
 			 end),
 	
 	mongo:do(safe, master, Conn, mongrel_test, fun() ->
