@@ -262,6 +262,13 @@ map_selector([{FieldId, FieldValue}|Tail], Result) ->
 		false ->
 			map_selector(Tail, Result ++ [FieldId, FieldValue]);
 		true ->
-			Arb = map_selector(FieldValue),
-			map_selector(Tail, Result ++ [FieldId, Arb])
+			MappedValueList = tuple_to_list(map_selector(FieldValue)),
+			MappedIdValueList = concat_ids(FieldId, MappedValueList, []),
+			map_selector(Tail, Result ++ MappedIdValueList)
 	end.
+
+concat_ids(_FieldId, [], Result) ->
+	Result;
+concat_ids(FieldId1, [FieldId2, FieldValue|Tail], Result) ->
+	FieldId = list_to_atom(atom_to_list(FieldId1) ++ "." ++ atom_to_list(FieldId2)),
+	concat_ids(FieldId1, Tail, Result ++ [FieldId, FieldValue]).
