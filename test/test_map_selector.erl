@@ -36,3 +36,14 @@ basic_selector_test_() ->
 		 Sel = #coords{x=3, z=5},
 	     {x, 3, z, 5} = mongrel_mapper:map_selector(Sel)
      end}.
+
+query_conditional_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
+		 Sel = #coords{x=3, y={'$gt', 7, '$lt', 10}},
+	     {x, 3, y, {'$gt', 7, '$lt', 10}} = mongrel_mapper:map_selector(Sel)
+     end}.
+	
