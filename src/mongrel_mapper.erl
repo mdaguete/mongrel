@@ -40,6 +40,9 @@
 
 -define(SERVER, ?MODULE).
 
+%% Include files
+-include_lib("mongrel_macros.hrl").
+
 %% We store the ETS table ID across calls.
 -record(state, {ets_table_id}).
 
@@ -88,7 +91,7 @@ get_field(Record, Field) ->
 	FieldIds = get_mapping(RecordName),
 	get_field(FieldIds, FieldValues, Field).
 
-set_field(Record, FieldId, {'$type', Collection, '$id', Id}, MapReferenceFun) ->
+set_field(Record, FieldId, {?TYPE_REF, Collection, '$id', Id}, MapReferenceFun) ->
 	set_field(Record, FieldId, MapReferenceFun(Collection, Id), MapReferenceFun);
 set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 	[RecordName|RecordList] = tuple_to_list(Record),
@@ -164,10 +167,10 @@ map_value(Value, DocList) when is_tuple(Value) ->
 			{MappedDoc, UpdatedDocList} = map_record(Value, DocList),
 			case has_id(Value) of
 				false ->
-					MappedDocList = ['$type', RecordName] ++ tuple_to_list(MappedDoc),
+					MappedDocList = [?TYPE_REF, RecordName] ++ tuple_to_list(MappedDoc),
 					{list_to_tuple(MappedDocList), UpdatedDocList};
 				true ->
-					{{'$type', RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, MappedDoc}]}
+					{{?TYPE_REF, RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, MappedDoc}]}
 			end;
 		false ->
 			{Value, DocList}
@@ -218,11 +221,11 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_lis
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
-		['$type', Type, '$id', Id] when is_atom(Type) ->
+		[?TYPE_REF, Type, '$id', Id] when is_atom(Type) ->
 			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
-		['$type', Type|ValueTail] when is_atom(Type) ->
+		[?TYPE_REF, Type|ValueTail] when is_atom(Type) ->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
 		_ ->
@@ -236,11 +239,11 @@ unmap_list_value([], _MapReferenceFun, Result) ->
 unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
 	FieldValueList = tuple_to_list(Value),
 	case FieldValueList of
-		['$type', Type, '$id', Id] when is_atom(Type) ->
+		[?TYPE_REF, Type, '$id', Id] when is_atom(Type) ->
 			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
-		['$type', Type|ValueTail] when is_atom(Type) ->
+		[?TYPE_REF, Type|ValueTail] when is_atom(Type) ->
 			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
 		_ ->

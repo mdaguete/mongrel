@@ -53,7 +53,7 @@ set_field_with_reference_test_() ->
 			  GetBuzz = fun(buzz, 7) ->
 								#buzz{'_id'=7, w = 3, z = 27}
 						end,
-			  Baz = mongrel_mapper:set_field(#baz{}, x, {'$type', buzz, '$id', 7}, GetBuzz),
+			  Baz = mongrel_mapper:set_field(#baz{}, x, {?TYPE_REF, buzz, '$id', 7}, GetBuzz),
 			  BazExpected = Baz
      end}.
 	
@@ -87,7 +87,7 @@ unmap_nested_doc_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  BarExpected = #bar{'_id' = 1234, z = #foo{baz=5}},
-			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z, {'$type', foo, baz, 5}}, undefined)
+			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z, {?TYPE_REF, foo, baz, 5}}, undefined)
      end}.
 
 unmap_deep_nested_doc_test_() ->
@@ -98,7 +98,7 @@ unmap_deep_nested_doc_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  BarExpected = #bar{'_id' = 1234, z = #foo{baz=#foo{baz=5}}},
-			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z,{'$type', foo, baz, {'$type', foo, baz, 5}}}, undefined)
+			  BarExpected = mongrel_mapper:unmap(bar, {'_id', 1234, z,{?TYPE_REF, foo, baz, {?TYPE_REF, foo, baz, 5}}}, undefined)
      end}.
 
 unmap_nested_doc_by_id_test_() ->
@@ -110,7 +110,7 @@ unmap_nested_doc_by_id_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(buzz)),
 			  BarExpected = #bar{'_id' = 1234, z = #buzz{'_id'=-123, w=1, z=2}},
 			  GetDocById = fun(buzz, -123) -> {'_id', -123, w, 1, z, 2} end,
-			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {'$type', buzz, '$id', -123}}, GetDocById),
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {?TYPE_REF, buzz, '$id', -123}}, GetDocById),
 			  BarExpected = Bar
      end}.
 
@@ -144,7 +144,7 @@ unmap_doc_with_complex_list_value_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  BarExpected = #bar{'_id' = 1234, z = [1,2, #foo{baz=0}]},
-			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2, {'$type', foo, baz, 0}]}, undefined),
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2, {?TYPE_REF, foo, baz, 0}]}, undefined),
 			  BarExpected = Bar
      end}.
 
@@ -156,6 +156,6 @@ unmap_doc_with_complex_list_value2_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  BarExpected = #bar{'_id' = 1234, z = [1,2, [3, #foo{baz=0}]]},
-			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2, [3, {'$type', foo, baz, 0}]]}, undefined),
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, [1,2, [3, {?TYPE_REF, foo, baz, 0}]]}, undefined),
 			  BarExpected = Bar
      end}.

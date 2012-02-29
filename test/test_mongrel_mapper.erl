@@ -204,7 +204,7 @@ map_nested_doc_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
 		 Foo = #foo{bar=3, baz= #baz{}},
-	     {{foo, {bar, 3, baz, {'$type', baz, x, 2, y, 8}}}, []} = mongrel_mapper:map(Foo)
+	     {{foo, {bar, 3, baz, {?TYPE_REF, baz, x, 2, y, 8}}}, []} = mongrel_mapper:map(Foo)
      end}.
 
 map_nested_doc_with_id_test_() ->
@@ -215,7 +215,7 @@ map_nested_doc_with_id_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 		 Foo = #foo{bar= #bar{'_id'=7}, baz=9},
-	     {{foo, {bar, {'$type', bar, '$id', 7}, baz, 9}}, [{bar, {'_id', 7}}]} = mongrel_mapper:map(Foo)
+	     {{foo, {bar, {?TYPE_REF, bar, '$id', 7}, baz, 9}}, [{bar, {'_id', 7}}]} = mongrel_mapper:map(Foo)
      end}.
 
 doc_with_simple_list_test_() ->
@@ -236,7 +236,7 @@ doc_with_complex_list_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 		 Foo = #foo{bar=[1,2,#bar{'_id'=8}, 4], baz=5},
-	     {{foo, {bar, [1,2, {'$type', bar, '$id', 8}, 4], baz, 5}}, [{bar, {'_id', 8}}]} = mongrel_mapper:map(Foo)
+	     {{foo, {bar, [1,2, {?TYPE_REF, bar, '$id', 8}, 4], baz, 5}}, [{bar, {'_id', 8}}]} = mongrel_mapper:map(Foo)
      end}.
 
 doc_with_complex_list_2_test_() ->
@@ -248,7 +248,7 @@ doc_with_complex_list_2_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)), 
 		 Foo = #foo{bar=[1,2,#bar{'_id'=3}, #baz{}], baz=5},
-	     {{foo, {bar, [1,2, {'$type', bar, '$id', 3}, {'$type', baz, x, 2, y, 8}], baz, 5}}, [{bar, {'_id', 3}}]} = mongrel_mapper:map(Foo)
+	     {{foo, {bar, [1,2, {?TYPE_REF, bar, '$id', 3}, {?TYPE_REF, baz, x, 2, y, 8}], baz, 5}}, [{bar, {'_id', 3}}]} = mongrel_mapper:map(Foo)
      end}.
 
 doc_with_non_record_tuple_test_() ->
@@ -280,7 +280,7 @@ doc_with_deep_nested_records_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
 		 Foo = #foo{baz=#foo{baz=#foo{bar=3}}},
-	     {{foo, {baz, {'$type', foo, baz, {'$type', foo, bar, 3, baz, 4}}}}, []} = mongrel_mapper:map(Foo)
+	     {{foo, {baz, {?TYPE_REF, foo, baz, {?TYPE_REF, foo, bar, 3, baz, 4}}}}, []} = mongrel_mapper:map(Foo)
      end}.
 	
 doc_with_deep_nested_records_with_ids_test_() ->
@@ -290,9 +290,9 @@ doc_with_deep_nested_records_with_ids_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(buzz)), 
 		 Buzz = #buzz{'_id'=1, w=1000, z=#buzz{'_id'=2, w=#buzz{'_id'=-2, w=0, z=7}, z=#buzz{'_id'=3, z=#buzz{'_id'=4, z=4} } } },
-	     {{buzz,{'_id',1,w,1000,z,{'$type',buzz,'$id',2}}},
-		 [{buzz,{'_id',-2,w,0,z,7}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{'$type',buzz,'$id',4}}},
-                 {buzz,{'_id',2,w,{'$type',buzz,'$id',-2},z,{'$type',buzz,'$id',3}}}]} = mongrel_mapper:map(Buzz)
+	     {{buzz,{'_id',1,w,1000,z,{?TYPE_REF,buzz,'$id',2}}},
+		 [{buzz,{'_id',-2,w,0,z,7}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{?TYPE_REF,buzz,'$id',4}}},
+                 {buzz,{'_id',2,w,{?TYPE_REF,buzz,'$id',-2},z,{?TYPE_REF,buzz,'$id',3}}}]} = mongrel_mapper:map(Buzz)
      end}.
 
 doc_with_list_with_deep_nesting_test_() ->
@@ -302,8 +302,8 @@ doc_with_list_with_deep_nesting_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(buzz)), 
 		 Buzz = #buzz{'_id'=1, z=[1, #buzz{'_id'=2, z=#buzz{'_id'=3, z=#buzz{'_id'=4, z=4} }, w=#buzz{'_id'=5} }, 3, #buzz{'_id'=6}]},
-		 {{buzz,{'_id',1,z,[1,{'$type',buzz,'$id',2},3,{'$type',buzz,'$id',6}]}},
-		 [{buzz,{'_id',5}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{'$type',buzz,'$id',4}}},
-                 {buzz,{'_id',2,w,{'$type',buzz,'$id',5},z,{'$type',buzz,'$id',3}}},{buzz,{'_id',6}}]} = mongrel_mapper:map(Buzz)
+		 {{buzz,{'_id',1,z,[1,{?TYPE_REF,buzz,'$id',2},3,{?TYPE_REF,buzz,'$id',6}]}},
+		 [{buzz,{'_id',5}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{?TYPE_REF,buzz,'$id',4}}},
+                 {buzz,{'_id',2,w,{?TYPE_REF,buzz,'$id',5},z,{?TYPE_REF,buzz,'$id',3}}},{buzz,{'_id',6}}]} = mongrel_mapper:map(Buzz)
      end}.
 	
