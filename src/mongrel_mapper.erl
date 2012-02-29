@@ -111,9 +111,15 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
 	unmap_record(TupleList, MapReferenceFun, InitialTuple).
 
-map_selector(Record) ->
-	{{_RecordName, Document}, []} = map(Record),
-	Document.
+map_selector(Selector) ->
+	case is_mapped(Selector) of
+		true ->
+			{{_RecordName, Document}, []} = map(Selector),
+			Document;
+		false ->
+			Selector
+	end.
+			
 
 %% Server functions
 

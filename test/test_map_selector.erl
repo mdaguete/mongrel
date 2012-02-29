@@ -47,3 +47,21 @@ query_conditional_test_() ->
 	     {x, 3, y, {'$gt', 7, '$lt', 10}} = mongrel_mapper:map_selector(Sel)
      end}.
 	
+query_non_record_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+		 Sel = {x, {'$gt', 7}},
+	     {x, {'$gt', 7}} = mongrel_mapper:map_selector(Sel)
+     end}.
+
+query_non_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+		 Sel = 3,
+	     3 = mongrel_mapper:map_selector(Sel)
+     end}.
+	
