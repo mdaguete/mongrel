@@ -53,7 +53,7 @@ set_field_with_reference_test_() ->
 			  GetBuzz = fun(buzz, 7) ->
 								#buzz{'_id'=7, w = 3, z = 27}
 						end,
-			  Baz = mongrel_mapper:set_field(#baz{}, x, {?TYPE_REF, buzz, '$id', 7}, GetBuzz),
+			  Baz = mongrel_mapper:set_field(#baz{}, x, {?TYPE_REF, buzz, ?ID_REF, 7}, GetBuzz),
 			  BazExpected = Baz
      end}.
 	
@@ -110,7 +110,7 @@ unmap_nested_doc_by_id_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(buzz)),
 			  BarExpected = #bar{'_id' = 1234, z = #buzz{'_id'=-123, w=1, z=2}},
 			  GetDocById = fun(buzz, -123) -> {'_id', -123, w, 1, z, 2} end,
-			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {?TYPE_REF, buzz, '$id', -123}}, GetDocById),
+			  Bar = mongrel_mapper:unmap(bar, {'_id', 1234, z, {?TYPE_REF, buzz, ?ID_REF, -123}}, GetDocById),
 			  BarExpected = Bar
      end}.
 

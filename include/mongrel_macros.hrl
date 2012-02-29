@@ -21,3 +21,5 @@
 -define(id(), '_id'=mongodb_app:gen_objectid()).
 
 -define(TYPE_REF, '#type').
+
+-define(ID_REF, '#id').

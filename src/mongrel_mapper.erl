@@ -91,7 +91,7 @@ get_field(Record, Field) ->
 	FieldIds = get_mapping(RecordName),
 	get_field(FieldIds, FieldValues, Field).
 
-set_field(Record, FieldId, {?TYPE_REF, Collection, '$id', Id}, MapReferenceFun) ->
+set_field(Record, FieldId, {?TYPE_REF, Collection, ?ID_REF, Id}, MapReferenceFun) ->
 	set_field(Record, FieldId, MapReferenceFun(Collection, Id), MapReferenceFun);
 set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 	[RecordName|RecordList] = tuple_to_list(Record),
@@ -170,7 +170,7 @@ map_value(Value, DocList) when is_tuple(Value) ->
 					MappedDocList = [?TYPE_REF, RecordName] ++ tuple_to_list(MappedDoc),
 					{list_to_tuple(MappedDocList), UpdatedDocList};
 				true ->
-					{{?TYPE_REF, RecordName, '$id', get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, MappedDoc}]}
+					{{?TYPE_REF, RecordName, ?ID_REF, get_field(Value, '_id')}, UpdatedDocList ++ [{RecordName, MappedDoc}]}
 			end;
 		false ->
 			{Value, DocList}
@@ -221,7 +221,7 @@ unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_lis
 unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
 	FieldValueList = tuple_to_list(FieldValue),
 	case FieldValueList of
-		[?TYPE_REF, Type, '$id', Id] when is_atom(Type) ->
+		[?TYPE_REF, Type, ?ID_REF, Id] when is_atom(Type) ->
 			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
@@ -239,7 +239,7 @@ unmap_list_value([], _MapReferenceFun, Result) ->
 unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
 	FieldValueList = tuple_to_list(Value),
 	case FieldValueList of
-		[?TYPE_REF, Type, '$id', Id] when is_atom(Type) ->
+		[?TYPE_REF, Type, ?ID_REF, Id] when is_atom(Type) ->
 			NestedDoc = MapReferenceFun(Type, Id),
 			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
 			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
