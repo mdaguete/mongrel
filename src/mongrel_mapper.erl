@@ -28,7 +28,8 @@
 		 get_field/2,
 		 set_field/4,
 		 map/1,
-		 unmap/3]).
+		 unmap/3,
+		 map_selector/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -109,6 +110,10 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	TupleList = tuple_to_list(Tuple),
 	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
 	unmap_record(TupleList, MapReferenceFun, InitialTuple).
+
+map_selector(Record) ->
+	{{_RecordName, Document}, []} = map(Record),
+	Document.
 
 %% Server functions
 
