@@ -114,8 +114,10 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 map_selector(Selector) ->
 	case is_mapped(Selector) of
 		true ->
-			{{_RecordName, Document}, []} = map(Selector),
-			Document;
+			[RecordName|_] = tuple_to_list(Selector),
+			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
+			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
+			list_to_tuple(map_selector(SelectorList, []));
 		false ->
 			Selector
 	end.
@@ -250,3 +252,16 @@ unmap_list([], _MapReferenceFun, Result) ->
 	Result;
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
+
+map_selector([], Result) ->
+	Result;
+map_selector([{_FieldId, undefined}|Tail], Result) ->
+	map_selector(Tail, Result);
+map_selector([{FieldId, FieldValue}|Tail], Result) ->
+	case is_mapped(FieldValue) of
+		false ->
+			map_selector(Tail, Result ++ [FieldId, FieldValue]);
+		true ->
+			Arb = map_selector(FieldValue),
+			map_selector(Tail, Result ++ [FieldId, Arb])
+	end.
