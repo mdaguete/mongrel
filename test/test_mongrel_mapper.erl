@@ -306,4 +306,3 @@ doc_with_list_with_deep_nesting_test_() ->
 		 [{buzz,{'_id',5}},{buzz,{'_id',4,z,4}},{buzz,{'_id',3,z,{?TYPE_REF,buzz,?ID_REF,4}}},
                  {buzz,{'_id',2,w,{?TYPE_REF,buzz,?ID_REF,5},z,{?TYPE_REF,buzz,?ID_REF,3}}},{buzz,{'_id',6}}]} = mongrel_mapper:map(Buzz)
      end}.
-	

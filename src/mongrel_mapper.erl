@@ -108,9 +108,7 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	TupleList = tuple_to_list(Tuple),
 	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
-	unmap_list(TupleList, MapReferenceFun, InitialTuple).
-
-
+	unmap_record(TupleList, MapReferenceFun, InitialTuple).
 
 %% Server functions
 
@@ -213,44 +211,34 @@ set_field([_FieldValue|ValuesTail], [FieldId|_TailsList], FieldId, NewFieldValue
 set_field([FieldValue|ValuesTail], [_FieldId|TailsList], FieldId, NewFieldValue, Result) ->
 	set_field(ValuesTail, TailsList, FieldId, NewFieldValue, Result ++ [FieldValue]).
 
-unmap_list([] = _TupleList, _MapReferenceFun, ResultTuple) ->
-	ResultTuple;
-unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_list(FieldValue) ->
-	ListValue = unmap_list_value(FieldValue, MapReferenceFun, []),
-	unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, ListValue, MapReferenceFun));
-unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) when is_tuple(FieldValue) ->
-	FieldValueList = tuple_to_list(FieldValue),
-	case FieldValueList of
-		[?TYPE_REF, Type, ?ID_REF, Id] when is_atom(Type) ->
-			NestedDoc = MapReferenceFun(Type, Id),
-			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
-			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
-		[?TYPE_REF, Type|ValueTail] when is_atom(Type) ->
-			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
-			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, NestedRecord, MapReferenceFun));
-		_ ->
-			unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, FieldValue, MapReferenceFun))
-	end;
-unmap_list([FieldId, FieldValue|Tail], MapReferenceFun, ResultTuple) ->
-	unmap_list(Tail, MapReferenceFun, set_field(ResultTuple, FieldId, FieldValue, MapReferenceFun)).
-
-unmap_list_value([], _MapReferenceFun, Result) ->
+unmap_record([], _MapReferenceFun, Result) ->
 	Result;
-unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_tuple(Value)->
-	FieldValueList = tuple_to_list(Value),
-	case FieldValueList of
-		[?TYPE_REF, Type, ?ID_REF, Id] when is_atom(Type) ->
-			NestedDoc = MapReferenceFun(Type, Id),
-			NestedRecord = unmap(Type, NestedDoc, MapReferenceFun),
-			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
-		[?TYPE_REF, Type|ValueTail] when is_atom(Type) ->
-			NestedRecord = unmap(Type, list_to_tuple(ValueTail), MapReferenceFun),
-			unmap_list_value(Tail, MapReferenceFun, Result ++ [NestedRecord]);
+unmap_record([FieldId, FieldValue|FieldsTail], MapReferenceFun, Result) ->
+	UnmappedValue = unmap_value(FieldValue, MapReferenceFun),
+	unmap_record(FieldsTail, MapReferenceFun, set_field(Result, FieldId, UnmappedValue, MapReferenceFun)).
+
+unmap_value(Value, MapReferenceFun) when is_tuple(Value) ->
+	unmap_tuple(Value, MapReferenceFun);
+unmap_value(Value, MapReferenceFun) when is_list(Value) ->
+	unmap_list(Value, MapReferenceFun);
+unmap_value(Value, _MapReferenceFun) ->
+	Value.
+
+unmap_tuple(Tuple, MapReferenceFun) ->
+	TupleAsList = tuple_to_list(Tuple),
+	case TupleAsList of
+		[?TYPE_REF, Type, ?ID_REF, Id|_] ->
+			unmap(Type, MapReferenceFun(Type, Id), MapReferenceFun);
+		[?TYPE_REF, Type|Fields] ->
+			unmap(Type, list_to_tuple(Fields), MapReferenceFun);
 		_ ->
-			unmap_list_value(Tail, MapReferenceFun, Result ++ [Value])
-	end;
-unmap_list_value([Value|Tail], MapReferenceFun, Result) when is_list(Value) ->
-	ListValue = unmap_list_value(Value, MapReferenceFun, []),
-	unmap_list(Tail, MapReferenceFun, Result ++ [ListValue]);
-unmap_list_value([Value|Tail], MapReferenceFun, Result) ->
-	unmap_list_value(Tail, MapReferenceFun, Result ++ [Value]).
+			Tuple
+	end.
+
+unmap_list(Value, MapReferenceFun) ->
+	unmap_list(Value, MapReferenceFun, []).
+
+unmap_list([], _MapReferenceFun, Result) ->
+	Result;
+unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
+	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
