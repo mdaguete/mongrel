@@ -19,6 +19,7 @@
 %% records used for testing.
 -record(coords, {x, y, z}).
 -record(foo, {bar, baz, unused}).
+-record(bar, {'_id', msg= <<"hello">>}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -84,7 +85,7 @@ record_nested_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  Sel = #coords{x=3, y=#foo{bar=7, baz=9}},
-			  {x, 3, 'y.bar', 7, 'y.baz', 9} = mongrel_mapper:map_selector(Sel)
+			  {x, 3, 'y.#type', foo, 'y.bar', 7, 'y.baz', 9} = mongrel_mapper:map_selector(Sel)
      end}.
 	
 record_mixed_test_() ->
@@ -94,7 +95,18 @@ record_mixed_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
-			  Sel = #coords{x=3, y=#foo{bar=#foo{}, baz={x, 9}}},
-			  {x, 3, 'y.baz', {x, 9}} = mongrel_mapper:map_selector(Sel)
+			  Sel = #coords{x=3, y=#foo{bar=#foo{baz=-1}, baz={x, 9}}},
+			  {x, 3, 'y.#type', foo, 'y.bar.#type', foo, 'y.bar.baz', -1, 'y.baz', {x, 9}} = mongrel_mapper:map_selector(Sel)
      end}.
-	
+
+record_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  Sel = #coords{x=0, y=#bar{'_id'=#foo{bar=3}}},
+			  {x, 0, 'y.#type', bar, 'y.#id.#type', foo, 'y.#id.bar', 3} = mongrel_mapper:map_selector(Sel)
+     end}.
