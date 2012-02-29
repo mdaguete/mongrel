@@ -18,6 +18,7 @@
 
 %% records used for testing.
 -record(coords, {x, y, z}).
+-record(foo, {bar, baz}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -63,5 +64,26 @@ query_non_tuple_test_() ->
      fun () ->
 		 Sel = 3,
 	     3 = mongrel_mapper:map_selector(Sel)
+     end}.
+	
+basic_nested_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  Sel = #coords{x=3, y={foo, 7, bar, 9}},
+			  {x, 3, y, {foo, 7, bar, 9}} = mongrel_mapper:map_selector(Sel)
+     end}.
+
+record_nested_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  Sel = #coords{x=3, y=#foo{bar=7, baz=9}},
+			  {x, 3, 'foo.bar', 7, 'foo.baz', 9} = mongrel_mapper:map_selector(Sel)
      end}.
 	
