@@ -220,7 +220,7 @@ unmap_record([FieldId, FieldValue|FieldsTail], MapReferenceFun, Result) ->
 unmap_value(Value, MapReferenceFun) when is_tuple(Value) ->
 	unmap_tuple(Value, MapReferenceFun);
 unmap_value(Value, MapReferenceFun) when is_list(Value) ->
-	unmap_list(Value, MapReferenceFun);
+	unmap_list(Value, MapReferenceFun, []);
 unmap_value(Value, _MapReferenceFun) ->
 	Value.
 
@@ -234,9 +234,6 @@ unmap_tuple(Tuple, MapReferenceFun) ->
 		_ ->
 			Tuple
 	end.
-
-unmap_list(Value, MapReferenceFun) ->
-	unmap_list(Value, MapReferenceFun, []).
 
 unmap_list([], _MapReferenceFun, Result) ->
 	Result;
