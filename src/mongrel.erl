@@ -23,32 +23,12 @@
 		 insert_all/1,
 		 find_one/1,
 		 delete/1,
+		 delete_one/1,
 		 count/1,
-		 count/2]).
+		 count/2,
+		 save/1]).
 
 %% External functions
-insert(Record) ->
-	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
-	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
-	mongo:insert(Collection, Document).
-
-insert_all(Records) ->
-	[insert(Record) || Record <- Records].
-
-find_one(RecordSelector) ->
-	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
-	{Res} = mongo:find_one(Collection, Selector),
-	CallbackFunc = fun(Coll, Id) ->
-						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
-						   Reference
-				   end,
-	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
-
-delete(RecordSelector) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
-	mongo:delete(Collection, Selector).
-
 count(RecordSelector) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
@@ -59,6 +39,37 @@ count(RecordSelector, Limit) ->
 	Selector = mongrel_mapper:map_selector(RecordSelector),
 	mongo:count(Collection, Selector, Limit).
 	
+delete(RecordSelector) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:delete(Collection, Selector).
+
+delete_one(RecordSelector) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:delete_one(Collection, Selector).
+
+find_one(RecordSelector) ->
+	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
+	{Res} = mongo:find_one(Collection, Selector),
+	CallbackFunc = fun(Coll, Id) ->
+						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
+						   Reference
+				   end,
+	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
+
+insert(Record) ->
+	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
+	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
+	mongo:insert(Collection, Document).
+
+insert_all(Records) ->
+	[insert(Record) || Record <- Records].
+	
+save(Record) ->
+	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
+	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
+	mongo:save(Collection, Document).
 	
 %% Internal functions
 
