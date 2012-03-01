@@ -176,6 +176,23 @@ get_nonexistent_field_test_() ->
 	     ?assertError(_, mongrel_mapper:get_field(#foo{}, '_id'))
      end}.
 
+get_type_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(foo)), 
+	     foo = mongrel_mapper:get_type(#foo{})
+     end}.
+	
+get_type_fail_test_() ->
+    {setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ?assertError(_, mongrel_mapper:get_type(#foo{}))
+     end}.
+	
 map_basic_test_() ->
 	{setup,
      fun setup/0,

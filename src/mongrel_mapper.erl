@@ -25,6 +25,7 @@
 		 get_mapping/1,
 		 is_mapped/1,
 		 has_id/1,
+		 get_type/1,
 		 get_field/2,
 		 set_field/4,
 		 map/1,
@@ -99,6 +100,11 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 	FieldIds = get_mapping(RecordName),
 	UpdatedRecordList = set_field(RecordList, FieldIds, FieldId, FieldValue, []),
 	list_to_tuple([RecordName|UpdatedRecordList]).
+
+get_type(Record) ->
+	true = is_mapped(Record),
+	[RecordName|_] = tuple_to_list(Record),
+	RecordName.
 
 map(Record) ->
 	[RecordName|_FieldValues] = tuple_to_list(Record),
