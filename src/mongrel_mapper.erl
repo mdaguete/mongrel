@@ -107,9 +107,8 @@ get_type(Record) ->
 	RecordName.
 
 map(Record) ->
-	[RecordName|_FieldValues] = tuple_to_list(Record),
 	{Document, ChildDocs} = map_record(Record, []),
-	{{RecordName, Document}, ChildDocs}.
+	{{get_type(Record), Document}, ChildDocs}.
 
 unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
@@ -120,7 +119,7 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 map_selector(Selector) ->
 	case is_mapped(Selector) of
 		true ->
-			[RecordName|_] = tuple_to_list(Selector),
+			RecordName = get_type(Selector),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
 			list_to_tuple(map_selector(SelectorList, []));
@@ -180,7 +179,7 @@ server_call(Command, Args) ->
 map_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
-			[RecordName|_FieldValues] = tuple_to_list(Value),
+			RecordName = get_type(Value),
 			{MappedDoc, UpdatedDocList} = map_record(Value, DocList),
 			case has_id(Value) of
 				false ->
@@ -268,31 +267,26 @@ map_selector([{FieldId, FieldValue}|Tail], Result) ->
 		false ->
 			map_selector(Tail, Result ++ [FieldId, FieldValue]);
 		true ->
-			[RecordType|_] = tuple_to_list(FieldValue),
-			case has_id(RecordType) of
-				false ->
-					MappedValueList = tuple_to_list(map_selector(FieldValue)),
-					MappedIdValueList = concat_ids(FieldId, ['#type', RecordType] ++ MappedValueList, []),
-					map_selector(Tail, Result ++ MappedIdValueList);
-				true ->
-					MappedValueList = remove_non_id(tuple_to_list(map_selector(FieldValue)), []),
-					MappedIdValueList = concat_ids(FieldId, ['#type', RecordType] ++ MappedValueList, []),
-					map_selector(Tail, Result ++ MappedIdValueList)
-			end
+			RecordType = get_type(FieldValue),
+			MappedValueList = tuple_to_list(map_selector(FieldValue)),
+			MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, has_id(RecordType), []),
+			map_selector(Tail, Result ++ MappedIdValueList)
 	end.
 
-concat_ids(_FieldId, [], Result) ->
+concat_field_ids(_FieldId, [], _HasId, Result) ->
 	Result;
-concat_ids(FieldId1, [FieldId2, FieldValue|Tail], Result) ->
+concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], false, Result) ->
 	FieldId = list_to_atom(atom_to_list(FieldId1) ++ "." ++ atom_to_list(FieldId2)),
-	concat_ids(FieldId1, Tail, Result ++ [FieldId, FieldValue]).
-
-remove_non_id([], Result) ->
-	Result;
-remove_non_id([FieldId, FieldValue|Tail], Result) ->
-	case atom_to_list(FieldId) of
-		"_id." ++ AtomTail ->
-			remove_non_id(Tail, Result ++ [list_to_atom("#id." ++ AtomTail), FieldValue]);
+	concat_field_ids(FieldId1, Tail, false, Result ++ [FieldId, FieldValue]);
+concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true, Result) ->
+	FieldId2List = atom_to_list(FieldId2),
+	case FieldId2List of
+		"#type" ->
+			FieldId = list_to_atom(atom_to_list(FieldId1) ++ ".#type"),
+			concat_field_ids(FieldId1, Tail, true, Result ++ [FieldId, FieldValue]);
+		"_id" ++ IdTail ->
+			FieldId = list_to_atom(atom_to_list(FieldId1) ++ ".#id" ++ IdTail),
+			concat_field_ids(FieldId1, Tail, true, Result ++ [FieldId, FieldValue]);
 		_ ->
-			remove_non_id(Tail, Result)
+			concat_field_ids(FieldId1, Tail, true, Result)
 	end.
