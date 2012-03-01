@@ -21,7 +21,8 @@
 %% API
 -export([insert/1,
 		 insert_all/1,
-		 find_one/1]).
+		 find_one/1,
+		 delete/1]).
 
 %% External functions
 insert(Record) ->
@@ -40,6 +41,11 @@ find_one(RecordSelector) ->
 						   Reference
 				   end,
 	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
+
+delete(RecordSelector) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:delete(Collection, Selector).
 
 %% Internal functions
 
