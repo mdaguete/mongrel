@@ -107,9 +107,8 @@ get_type(Record) ->
 	RecordName.
 
 map(Record) ->
-	[RecordName|_FieldValues] = tuple_to_list(Record),
 	{Document, ChildDocs} = map_record(Record, []),
-	{{RecordName, Document}, ChildDocs}.
+	{{get_type(Record), Document}, ChildDocs}.
 
 unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
@@ -120,7 +119,7 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 map_selector(Selector) ->
 	case is_mapped(Selector) of
 		true ->
-			[RecordName|_] = tuple_to_list(Selector),
+			RecordName = get_type(Selector),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
 			list_to_tuple(map_selector(SelectorList, []));
@@ -180,7 +179,7 @@ server_call(Command, Args) ->
 map_value(Value, DocList) when is_tuple(Value) ->
 	case mongrel_mapper:is_mapped(Value) of
 		true ->
-			[RecordName|_FieldValues] = tuple_to_list(Value),
+			RecordName = get_type(Value),
 			{MappedDoc, UpdatedDocList} = map_record(Value, DocList),
 			case has_id(Value) of
 				false ->
@@ -268,7 +267,7 @@ map_selector([{FieldId, FieldValue}|Tail], Result) ->
 		false ->
 			map_selector(Tail, Result ++ [FieldId, FieldValue]);
 		true ->
-			[RecordType|_] = tuple_to_list(FieldValue),
+			RecordType = get_type(FieldValue),
 			case has_id(RecordType) of
 				false ->
 					MappedValueList = tuple_to_list(map_selector(FieldValue)),
