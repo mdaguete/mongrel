@@ -22,7 +22,9 @@
 -export([insert/1,
 		 insert_all/1,
 		 find_one/1,
-		 delete/1]).
+		 delete/1,
+		 count/1,
+		 count/2]).
 
 %% External functions
 insert(Record) ->
@@ -47,5 +49,16 @@ delete(RecordSelector) ->
 	Selector = mongrel_mapper:map_selector(RecordSelector),
 	mongo:delete(Collection, Selector).
 
+count(RecordSelector) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:count(Collection, Selector).
+
+count(RecordSelector, Limit) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:count(Collection, Selector, Limit).
+	
+	
 %% Internal functions
 
