@@ -34,12 +34,12 @@ test() ->
 	{ok, Conn} = mongo:connect(Host),
 	
 	% Use the mongrel insert_all function and the MongoDB driver to write the book records to the database
-	{ok, _} = mongo:do(safe, master, Conn, mongrel_test, fun() ->
+	{ok, _} = mongrel:do(safe, master, Conn, mongrel_test, fun() ->
 													   mongrel:insert_all([Book1WithReviews, Book2WithReviews, Book3])
 			 end),
 	
 	mongrel:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:find(#book{})
+													   mongrel:find(#book{}, #book{reviews=0},1,1)
 			 end).
 
 	%mongo:do(safe, master, Conn, mongrel_test, fun() ->
