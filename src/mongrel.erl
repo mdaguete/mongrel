@@ -67,7 +67,8 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
 
 find(RecordSelector) ->
-	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
 	MongoCursor = mongo:find(Collection, Selector),
 	WriteMode = get(write_mode),
 	ReadMode = get(read_mode),
@@ -76,7 +77,8 @@ find(RecordSelector) ->
 	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
 
 find_one(RecordSelector) ->
-	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
 	{Res} = mongo:find_one(Collection, Selector),
 	CallbackFunc = fun(Coll, Id) ->
 						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
