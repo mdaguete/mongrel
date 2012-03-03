@@ -20,7 +20,7 @@
 -behaviour(gen_server).
 
 %% External exports
--export([cursor/2,
+-export([cursor/3,
 		 next/1]).
 
 %% gen_server callbacks
@@ -31,11 +31,11 @@
 		 terminate/2, 
 		 code_change/3]).
 
--record(state, {mongo_cursor, mongo_db_connection}).
+-record(state, {mongo_cursor, mongo_connection, mongo_collection}).
 
 %% External functions
-cursor(MongoDbCursor, MongoDbConnection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoDbCursor, MongoDbConnection], []),
+cursor(MongoDbCursor, MongoDbConnection, MongoDbCollection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoDbCursor, MongoDbConnection, MongoDbCollection], []),
 	Pid.
 
 next(Cursor) ->
@@ -46,15 +46,24 @@ next(Cursor) ->
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
 %% @spec init(MongoDbCursor, MongoDbConnection) -> {ok, State::tuple()}
 %% @end
-init([MongoDbCursor, MongoDbConnection]) ->
-    {ok, #state{mongo_cursor=MongoDbCursor, mongo_db_connection=MongoDbConnection}}.
+init([MongoDbCursor, MongoDbConnection, MongoDbCollection]) ->
+    {ok, #state{mongo_cursor=MongoDbCursor, mongo_connection=MongoDbConnection, mongo_collection=MongoDbCollection}}.
 
 handle_call(next, _From, State) ->
 		case mongo_cursor:next(State#state.mongo_cursor) of
 			{} ->
 				{stop, normal, {}, State};
-			Document ->
-				{reply, Document, State}
+			{Document} ->
+				CallbackFunc = fun(Coll, Id) ->
+									   {ok, Res} = mongo:do(safe, master, State#state.mongo_connection, mongrel_test, 
+												fun() ->
+														{Reference} = mongo:find_one(Coll, {'_id', Id}),
+														Reference
+												end),
+									   Res
+							   end,
+				Reply = mongrel_mapper:unmap(State#state.mongo_collection, Document, CallbackFunc),
+				{reply, Reply, State}
 		end.
 
 %% @doc Responds asynchronously to messages.

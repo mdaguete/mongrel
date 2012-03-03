@@ -38,7 +38,7 @@ test() ->
 													   mongrel:insert_all([Book1WithReviews, Book2WithReviews, Book3])
 			 end),
 	
-	mongo:do(safe, master, Conn, mongrel_test, fun() ->
+	mongrel:do(safe, master, Conn, mongrel_test, fun() ->
 													   mongrel:find(#book{})
 			 end).
 

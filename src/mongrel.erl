@@ -69,8 +69,8 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 find(RecordSelector) ->
 	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
 	MongoCursor = mongo:find(Collection, Selector),
-	MongoConnection = get(db_collection),
-	mongrel_cursor:cursor(MongoCursor, MongoConnection).
+	MongoConnection = get(db_connection),
+	mongrel_cursor:cursor(MongoCursor, MongoConnection, Collection).
 
 find_one(RecordSelector) ->
 	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
