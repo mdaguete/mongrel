@@ -12,7 +12,7 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel mapping server. This module provides the Record/Mapping API.
+%%% @doc Mongrel API. This module provides CRUD operations.
 %%% @end
 
 -module(mongrel).
@@ -129,7 +129,5 @@ code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
 
-%% --------------------------------------------------------------------
 %%% Internal functions
-%% --------------------------------------------------------------------
 
