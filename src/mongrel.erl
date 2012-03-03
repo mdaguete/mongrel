@@ -12,21 +12,33 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel server. This module interacts with MongoDB. It presents a similar API to the
-%%%      mongo module of the MongoDB driver.
+%%% @doc Mongrel mapping server. This module provides the Record/Mapping API.
 %%% @end
 
 -module(mongrel).
 
+-behaviour(gen_server).
+
 %% API
--export([insert/1,
-		 insert_all/1,
-		 find_one/1,
+-export([count/1,
+		 count/2,
 		 delete/1,
 		 delete_one/1,
-		 count/1,
-		 count/2,
+		 do/5,
+		 find_one/1,
+		 insert/1,
+		 insert_all/1,
 		 save/1]).
+
+%% gen_server callbacks
+-export([init/1, 
+		 handle_call/3, 
+		 handle_cast/2, 
+		 handle_info/2, 
+		 terminate/2, 
+		 code_change/3]).
+
+-record(state, {}).
 
 %% External functions
 count(RecordSelector) ->
@@ -48,6 +60,10 @@ delete_one(RecordSelector) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
 	mongo:delete_one(Collection, Selector).
+
+do(WriteMode, ReadMode, Connection, Database, Action) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [Connection], []),
+	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
 
 find_one(RecordSelector) ->
 	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
@@ -71,5 +87,49 @@ save(Record) ->
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
 	mongo:save(Collection, Document).
 	
-%% Internal functions
+
+%% Server functions
+
+%% @doc Initializes the server with a MongoDB connection.
+%% @spec init(MongoDbConnection) -> {ok, State::tuple()}
+%% @end
+init([MongoDbConnection]) ->
+	put(db_connection, MongoDbConnection),
+    {ok, #state{}}.
+
+%% @doc Responds synchronously to server calls.
+%% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), NewState::tuple()}
+%% @end
+handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
+    Reply = mongo:do(WriteMode, ReadMode, Connection, Database, Action),
+    {stop, normal, Reply, State}.
+
+%% @doc Responds asynchronously to messages.
+%% @spec handle_cast(any(), tuple()) -> {no_reply, State}
+%% @end
+handle_cast(_Message, State) ->
+	{noreply, State}.
+
+%% @doc Responds to non-OTP messages.
+%% @spec handle_info(any(), tuple()) -> {no_reply, State}
+%% @end
+handle_info(_Info, State) ->
+	{noreply, State}.
+
+%% @doc Handles the shutdown of the server.
+%% @spec terminate(any(), any()) -> ok
+%% @end
+terminate(_Reason, _State) ->
+	ok.
+
+%% @doc Responds to code changes.
+%% @spec code_change(any(), any(), any()) -> {ok, State}
+%% @end
+code_change(_OldVersion, State, _Extra) ->
+	{ok, State}.
+
+
+%% --------------------------------------------------------------------
+%%% Internal functions
+%% --------------------------------------------------------------------
 
