@@ -27,6 +27,8 @@
 		 do/5,
 		 find/1,
 		 find/2,
+		 find/3,
+		 find/4,
 		 find_one/1,
 		 insert/1,
 		 insert_all/1,
@@ -71,10 +73,16 @@ find(RecordSelector) ->
 	find(RecordSelector, []).
 
 find(RecordSelector, RecordProjector) ->
+	find(RecordSelector, RecordProjector, 0).
+
+find(RecordSelector, RecordProjector, Skip) ->
+	find(RecordSelector, RecordProjector, Skip, 0).
+
+find(RecordSelector, RecordProjector, Skip, BatchSize) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
-	RecordProjector = mongrel_mapper:map_projection(RecordProjector),
-	MongoCursor = mongo:find(Collection, Selector),
+	Projector = mongrel_mapper:map_projection(RecordProjector),
+	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
 	WriteMode = get(write_mode),
 	ReadMode = get(read_mode),
 	Connection = get(connection),
