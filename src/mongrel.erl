@@ -63,14 +63,17 @@ delete_one(RecordSelector) ->
 	mongo:delete_one(Collection, Selector).
 
 do(WriteMode, ReadMode, Connection, Database, Action) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [Connection], []),
+	{ok, Pid} = gen_server:start_link(?MODULE, [WriteMode, ReadMode, Connection, Database], []),
 	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
 
 find(RecordSelector) ->
 	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
 	MongoCursor = mongo:find(Collection, Selector),
-	MongoConnection = get(db_connection),
-	mongrel_cursor:cursor(MongoCursor, MongoConnection, Collection).
+	WriteMode = get(write_mode),
+	ReadMode = get(read_mode),
+	Connection = get(connection),
+	Database = get(database),
+	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
 
 find_one(RecordSelector) ->
 	{{Collection, Selector}, _} = mongrel_mapper:map(RecordSelector),
@@ -100,8 +103,11 @@ save(Record) ->
 %% @doc Initializes the server with a MongoDB connection.
 %% @spec init(MongoDbConnection) -> {ok, State::tuple()}
 %% @end
-init([MongoDbConnection]) ->
-	put(db_connection, MongoDbConnection),
+init([WriteMode, ReadMode, Connection, Database]) ->
+	put(write_mode, WriteMode),
+	put(read_mode, ReadMode),
+	put(connection, Connection),
+	put(database, Database),
     {ok, #state{}}.
 
 %% @doc Responds synchronously to server calls.

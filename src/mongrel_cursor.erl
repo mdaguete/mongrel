@@ -20,7 +20,7 @@
 -behaviour(gen_server).
 
 %% External exports
--export([cursor/3,
+-export([cursor/6,
 		 next/1]).
 
 %% gen_server callbacks
@@ -31,11 +31,11 @@
 		 terminate/2, 
 		 code_change/3]).
 
--record(state, {mongo_cursor, mongo_connection, mongo_collection}).
+-record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection}).
 
 %% External functions
-cursor(MongoDbCursor, MongoDbConnection, MongoDbCollection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoDbCursor, MongoDbConnection, MongoDbCollection], []),
+cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, Database, Collection], []),
 	Pid.
 
 next(Cursor) ->
@@ -46,8 +46,9 @@ next(Cursor) ->
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
 %% @spec init(MongoDbCursor, MongoDbConnection) -> {ok, State::tuple()}
 %% @end
-init([MongoDbCursor, MongoDbConnection, MongoDbCollection]) ->
-    {ok, #state{mongo_cursor=MongoDbCursor, mongo_connection=MongoDbConnection, mongo_collection=MongoDbCollection}}.
+init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection]) ->
+    {ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
+				database = Database, collection=Collection}}.
 
 handle_call(next, _From, State) ->
 		case mongo_cursor:next(State#state.mongo_cursor) of
@@ -55,14 +56,18 @@ handle_call(next, _From, State) ->
 				{stop, normal, {}, State};
 			{Document} ->
 				CallbackFunc = fun(Coll, Id) ->
-									   {ok, Res} = mongo:do(safe, master, State#state.mongo_connection, mongrel_test, 
+									   ReadMode = State#state.read_mode,
+									   WriteMode = State#state.write_mode,
+									   Connection = State#state.connection,
+									   Database = State#state.database,
+									   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database, 
 												fun() ->
 														{Reference} = mongo:find_one(Coll, {'_id', Id}),
 														Reference
 												end),
 									   Res
 							   end,
-				Reply = mongrel_mapper:unmap(State#state.mongo_collection, Document, CallbackFunc),
+				Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
 				{reply, Reply, State}
 		end.
 
