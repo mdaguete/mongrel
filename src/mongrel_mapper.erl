@@ -30,7 +30,8 @@
 		 set_field/4,
 		 map/1,
 		 unmap/3,
-		 map_selector/1]).
+		 map_selector/1,
+		 map_projection/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -127,6 +128,8 @@ map_selector(Selector) ->
 			Selector
 	end.
 			
+map_projection(Projection) ->
+	map_selector(Projection).
 
 %% Server functions
 

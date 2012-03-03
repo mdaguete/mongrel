@@ -44,7 +44,7 @@ next(Cursor) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
-%% @spec init(MongoDbCursor, MongoDbConnection) -> {ok, State::tuple()}
+%% @spec init(list()) -> {ok, State::tuple()}
 %% @end
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection]) ->
     {ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 

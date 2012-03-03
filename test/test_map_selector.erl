@@ -110,3 +110,29 @@ record_with_id_test_() ->
 			  Sel = #coords{x=0, y=#bar{'_id'=#foo{bar=3}}},
 			  {x, 0, 'y.#type', bar, 'y.#id.#type', foo, 'y.#id.bar', 3} = mongrel_mapper:map_selector(Sel)
      end}.
+
+map_empty_list_projection_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  [] = mongrel_mapper:map_projection([])
+     end}.
+	
+map_mongo_style_projection_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  {title, 1, author, 1} = mongrel_mapper:map_projection({title, 1, author, 1})
+     end}.
+	
+map_record_projection_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  {x, 1, y, 1, z, 0} = mongrel_mapper:map_projection(#coords{x=1, y=1, z=0})
+     end}.
+	
