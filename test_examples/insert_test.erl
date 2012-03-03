@@ -39,7 +39,7 @@ test() ->
 			 end),
 	
 	mongrel:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:find(#book{}, #book{reviews=0},1,1)
+													   mongrel:find(#book{}, #book{title=1},0,0)
 			 end).
 
 	%mongo:do(safe, master, Conn, mongrel_test, fun() ->

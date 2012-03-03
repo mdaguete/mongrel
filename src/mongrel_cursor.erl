@@ -21,7 +21,8 @@
 
 %% External exports
 -export([cursor/6,
-		 next/1]).
+		 next/1,
+		 get_mongo_cursor/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -41,6 +42,9 @@ cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
 next(Cursor) ->
 	gen_server:call(Cursor, next, infinity).
 
+get_mongo_cursor(Cursor) ->
+	gen_server:call(Cursor, get_mongo_cursor, infinity).
+	
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
@@ -51,25 +55,28 @@ init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection]) ->
 				database = Database, collection=Collection}}.
 
 handle_call(next, _From, State) ->
-		case mongo_cursor:next(State#state.mongo_cursor) of
-			{} ->
-				{stop, normal, {}, State};
-			{Document} ->
-				CallbackFunc = fun(Coll, Id) ->
-									   ReadMode = State#state.read_mode,
-									   WriteMode = State#state.write_mode,
-									   Connection = State#state.connection,
-									   Database = State#state.database,
-									   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database, 
-												fun() ->
-														{Reference} = mongo:find_one(Coll, {'_id', Id}),
-														Reference
-												end),
-									   Res
-							   end,
-				Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
-				{reply, Reply, State}
-		end.
+	case mongo_cursor:next(State#state.mongo_cursor) of
+		{} ->
+			{stop, normal, {}, State};
+		{Document} ->
+			CallbackFunc = fun(Coll, Id) ->
+								   ReadMode = State#state.read_mode,
+								   WriteMode = State#state.write_mode,
+								   Connection = State#state.connection,
+								   Database = State#state.database,
+								   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database, 
+											fun() ->
+													{Reference} = mongo:find_one(Coll, {'_id', Id}),
+													Reference
+											end),
+								   Res
+						   end,
+			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
+			{reply, Reply, State}
+	end;
+handle_call(get_mongo_cursor, _From, State) ->
+	{reply, State#state.mongo_cursor, State}.
+
 
 %% @doc Responds asynchronously to messages.
 %% @spec handle_cast(any(), tuple()) -> {no_reply, State}
