@@ -47,7 +47,7 @@ test() ->
 								 {Dickens} = mongrel:find_one(#author{last_name= <<"Dickens">>}),
 								 Modifier = {'$set', {first_name, <<"Charles">>}},
 								 %Modifier = {'$set', #author{first_name= <<"Charles">>}},							 
-								 mongrel:replace(#book{title= <<"Grate Expectations">>}, #book{title= <<"GRATE Expectations">>, author=Dickens}),
+								 mongrel:repsert(#book{title= <<"A Tale of Two Cities">>}, #book{title= <<"A Tale of Two Cities">>, author=Dickens, ?id()}),
 								 mongrel:modify(Dickens, Modifier),
 								 Cursor = mongrel:find(#book{author=#author{'_id' = {'$in', [Author2#author.'_id', Author1#author.'_id']}}}),
 								 AllBooks = mongrel_cursor:rest(Cursor),

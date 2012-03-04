@@ -36,6 +36,7 @@
 		 insert_all/1,
 		 modify/2,
 		 replace/2,
+		 repsert/2,
 		 save/1]).
 
 %% gen_server callbacks
@@ -128,6 +129,12 @@ replace(RecordSelector, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
 	mongo:replace(Collection, Selector, NewDocument),
+	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
+	
+repsert(RecordSelector, NewRecord) ->
+	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	mongo:repsert(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
 save(Record) ->
