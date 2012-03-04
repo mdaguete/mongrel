@@ -52,14 +52,14 @@ get_mongo_cursor(Cursor) ->
 
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
-	
+
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
 %% @spec init(list()) -> {ok, State::tuple()}
 %% @end
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection]) ->
-    {ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
+	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
 				database = Database, collection=Collection}}.
 
 handle_call(next, _From, State) ->
@@ -67,35 +67,12 @@ handle_call(next, _From, State) ->
 		{} ->
 			{stop, normal, {}, State};
 		{Document} ->
-			CallbackFunc = fun(Coll, Id) ->
-								   ReadMode = State#state.read_mode,
-								   WriteMode = State#state.write_mode,
-								   Connection = State#state.connection,
-								   Database = State#state.database,
-								   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database, 
-											fun() ->
-													{Reference} = mongo:find_one(Coll, {'_id', Id}),
-													Reference
-											end),
-								   Res
-						   end,
+			CallbackFunc = construct_callback_function(State),
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
 			{reply, Reply, State}
 	end;
 handle_call(rest, _From, State) ->
-	CallbackFunc = fun(Coll, Id) ->
-						   ReadMode = State#state.read_mode,
-						   WriteMode = State#state.write_mode,
-						   Connection = State#state.connection,
-						   Database = State#state.database,
-						   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database,
-												fun() ->
-														{Reference} = mongo:find_one(Coll, {'_id', Id}),
-														Reference
-												end),
-						   Res
-				   end,
-	Docs = rest(State#state.mongo_cursor, State#state.collection, CallbackFunc, []),
+	Docs = rest(State, []),
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
 	{reply, State#state.mongo_cursor, State};
@@ -130,13 +107,28 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %%% Internal functions
-rest(MongoCursor, Collection, CallbackFunc, Docs) ->
+rest(State, Docs) ->
+	MongoCursor = State#state.mongo_cursor,
 	case mongo_cursor:next(MongoCursor) of
 		{} ->
 			Docs;
 		{Doc} ->
-			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunc),
-			rest(MongoCursor, Collection, CallbackFunc, Docs ++ [Record])
+			CallbackFunction = construct_callback_function(State),
+			Collection = State#state.collection,
+			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunction),
+			rest(State, Docs ++ [Record])
 	end.
 
-	
+construct_callback_function(State) ->
+	fun(Coll, Id) ->
+			ReadMode = State#state.read_mode,
+			WriteMode = State#state.write_mode,
+			Connection = State#state.connection,
+			Database = State#state.database,
+			{ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database,
+								 fun() ->
+										 {Reference} = mongo:find_one(Coll, {'_id', Id}),
+										 Reference
+								 end),
+			Res
+	end.
