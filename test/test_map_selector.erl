@@ -139,7 +139,7 @@ map_selector_nested_record_with_non_id_set_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  ?assertError(_, mongrel_mapper:map_selector(#coords{x = #bar{msg = 90}}))
+			  {'x.#type', bar} = mongrel_mapper:map_selector(#coords{x = #bar{msg = 90}})
      end}.
 
 map_empty_list_projection_test_() ->
@@ -195,6 +195,16 @@ map_modifier_nested_record_test_() ->
 			  {'$set', {'x.bar', 3}} = mongrel_mapper:map_modifier({'$set', #coords{x = #foo{bar=3}}})
      end}.
 
+map_modifier_record_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  {'$set', {y, 3}} = mongrel_mapper:map_modifier({'$set', #baz{y=3}})
+     end}.
+	
 map_modifier_deep_nested_record_test_() ->
 	{setup,
      fun setup/0,

@@ -319,6 +319,5 @@ concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true, Result) ->
 			FieldId = list_to_atom(atom_to_list(FieldId1) ++ ".#id" ++ IdTail),
 			concat_field_ids(FieldId1, Tail, true, Result ++ [FieldId, FieldValue]);
 		_ ->
-			undefined = FieldValue,
 			concat_field_ids(FieldId1, Tail, true, Result)
 	end.

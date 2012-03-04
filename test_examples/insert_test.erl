@@ -34,12 +34,24 @@ test() ->
 	{ok, Conn} = mongo:connect(Host),
 	
 	% Use the mongrel insert_all function and the MongoDB driver to write the book records to the database
-	{ok, _} = mongrel:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:insert_all([Book1WithReviews, Book2WithReviews, Book3])
-			 end),
-	
-	mongrel:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:find(#book{}, #book{title=1})
+	{ok, _} = mongrel:do(safe, master, Conn, mongrel_test, 
+						 fun() ->
+								 mongrel:delete(#author{}),
+								 mongrel:delete(#book{}),
+								 mongrel:insert_all([Book1WithReviews, Book2WithReviews, Book3]),
+								 {EdmundWells} = mongrel:find_one(#author{first_name= <<"Edmund">>, last_name= <<"Wells">>}),
+								 Sel = #book{title = <<"David Copperfield">>, author= EdmundWells},
+								 {DavidCopperfield} = mongrel:find_one(Sel),
+								 DavidCoperfield = DavidCopperfield#book{title= <<"David Coperfield">>},
+								 mongrel:save(DavidCoperfield),
+								 {Dickens} = mongrel:find_one(#author{last_name= <<"Dickens">>}),
+								 Modifier = {'$set', {first_name, <<"Charles">>}},
+								 mongrel:modify(Dickens, Modifier),
+								 Cursor = mongrel:find(#book{}, #book{reviews=0}),
+								 AllBooks = mongrel_cursor:rest(Cursor),
+								 {AllBooks}
+
+						 
 			 end).
 	
 	%mongrel:do(safe, master, Conn, mongrel_test, fun() ->

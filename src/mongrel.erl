@@ -120,7 +120,7 @@ insert_all(Records) ->
 modify(RecordSelector, RecordModifier) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
-	Modifier = mongrel_mapper:map_projection(RecordModifier),
+	Modifier = mongrel_mapper:map_modifier(RecordModifier),
 	mongo:modify(Collection, Selector, Modifier).
 
 save(Record) ->
