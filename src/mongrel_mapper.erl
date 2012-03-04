@@ -31,7 +31,8 @@
 		 map/1,
 		 unmap/3,
 		 map_selector/1,
-		 map_projection/1]).
+		 map_projection/1,
+		 map_modifier/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -130,6 +131,10 @@ map_selector(Selector) ->
 			
 map_projection(Projection) ->
 	map_selector(Projection).
+
+map_modifier(Modifier) ->
+	map_selector(Modifier).
+
 
 %% Server functions
 
@@ -263,7 +268,8 @@ unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 
 map_selector([], Result) ->
 	Result;
-map_selector([{_FieldId, undefined}|Tail], Result) ->
+map_selector([{FieldId, undefined}|Tail], Result) ->
+	true = (FieldId =/= '_id'),
 	map_selector(Tail, Result);
 map_selector([{FieldId, FieldValue}|Tail], Result) ->
 	case is_mapped(FieldValue) of

@@ -136,3 +136,51 @@ map_record_projection_test_() ->
 			  {x, 1, y, 1, z, 0} = mongrel_mapper:map_projection(#coords{x=1, y=1, z=0})
      end}.
 	
+map_modifier_not_record_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  {foo, 3, bar, 5} = mongrel_mapper:map_modifier({foo, 3, bar, 5})
+     end}.
+	
+map_modifier_record_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  {x, {'$inc', 1}} = mongrel_mapper:map_modifier(#coords{x = {'$inc', 1}})
+     end}.
+	
+map_modifier_nested_record_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  {'x.#type', foo, 'x.bar', 3} = mongrel_mapper:map_modifier(#coords{x = #foo{bar=3}})
+     end}.
+
+map_modifier_nested_record_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  {'x.#type', bar, 'x.#id', 5} = mongrel_mapper:map_modifier(#coords{x = #bar{'_id'=5}})
+     end}.
+	
+map_modifier_nested_record_with_id_not_set_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  ?assertError(_, mongrel_mapper:map_modifier(#coords{x = #bar{}}))
+     end}.
+	
