@@ -69,6 +69,7 @@ handle_call(next, _From, State) ->
 		{Document} ->
 			CallbackFunc = construct_callback_function(State),
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
+			% TODO timeout?
 			{reply, Reply, State}
 	end;
 handle_call(rest, _From, State) ->
