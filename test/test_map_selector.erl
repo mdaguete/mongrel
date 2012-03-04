@@ -132,14 +132,24 @@ map_selector_nested_record_with_non_id_not_set_test_() ->
 			  {'x.#type', bar} = mongrel_mapper:map_selector(#coords{x = #bar{}})
      end}.
 
-map_selector_nested_record_with_non_id_set_test_() ->
+map_selector_nested_record_with_id_non_id_set_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  {'x.#type', bar} = mongrel_mapper:map_selector(#coords{x = #bar{msg = 90}})
+			  {'x.#type', bar, 'x.#id', 30} = mongrel_mapper:map_selector(#coords{x = #bar{'_id' = 30, msg = 90}})
+     end}.
+
+map_selector_nested_record_with_id_not_set_and_non_id_set_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  ?assertError(_, mongrel_mapper:map_selector(#coords{x = #bar{msg = 12345}}))
      end}.
 
 map_empty_list_projection_test_() ->

@@ -293,31 +293,39 @@ map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) ->
 			map_spm(Tail, IsModifier, Result ++ [FieldId, FieldValue]);
 		true ->
 			RecordType = get_type(FieldValue),
+			HasId = has_id(RecordType),
+			IdIsSet = case HasId of
+						  true ->
+							  get_field(FieldValue, '_id') =/= undefined;
+						  false ->
+							  false
+					  end,
 			case IsModifier of
 				false ->
 					MappedValueList = tuple_to_list(map_selector(FieldValue)),
-					MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, has_id(RecordType), []);
+					MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, HasId, IdIsSet, []);
 				true ->
 					MappedValueList = tuple_to_list(map_modifier(FieldValue)),
-					MappedIdValueList = concat_field_ids(FieldId, MappedValueList, has_id(RecordType), [])
+					MappedIdValueList = concat_field_ids(FieldId, MappedValueList, HasId, IdIsSet, [])
 			end,
 			map_spm(Tail, IsModifier, Result ++ MappedIdValueList)
 	end.
 
-concat_field_ids(_FieldId, [], _HasId, Result) ->
+concat_field_ids(_FieldId, [], _HasId, _IdIsSet, Result) ->
 	Result;
-concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], false, Result) ->
+concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], false,  false, Result) ->
 	FieldId = list_to_atom(atom_to_list(FieldId1) ++ "." ++ atom_to_list(FieldId2)),
-	concat_field_ids(FieldId1, Tail, false, Result ++ [FieldId, FieldValue]);
-concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true, Result) ->
+	concat_field_ids(FieldId1, Tail, false, false, Result ++ [FieldId, FieldValue]);
+concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true,  IdIsSet, Result) ->
 	FieldId2List = atom_to_list(FieldId2),
 	case FieldId2List of
 		"#type" ->
 			FieldId = list_to_atom(atom_to_list(FieldId1) ++ ".#type"),
-			concat_field_ids(FieldId1, Tail, true, Result ++ [FieldId, FieldValue]);
+			concat_field_ids(FieldId1, Tail, true, IdIsSet, Result ++ [FieldId, FieldValue]);
 		"_id" ++ IdTail ->
 			FieldId = list_to_atom(atom_to_list(FieldId1) ++ ".#id" ++ IdTail),
-			concat_field_ids(FieldId1, Tail, true, Result ++ [FieldId, FieldValue]);
+			concat_field_ids(FieldId1, Tail, true, IdIsSet, Result ++ [FieldId, FieldValue]);
 		_ ->
-			concat_field_ids(FieldId1, Tail, true, Result)
+			true = IdIsSet,
+			concat_field_ids(FieldId1, Tail, true, IdIsSet, Result)
 	end.
