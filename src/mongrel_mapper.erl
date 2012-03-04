@@ -119,15 +119,7 @@ unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
 	unmap_record(TupleList, MapReferenceFun, InitialTuple).
 
 map_selector(Selector) ->
-	case is_mapped(Selector) of
-		true ->
-			RecordName = get_type(Selector),
-			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
-			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(map_selector(SelectorList, []));
-		false ->
-			Selector
-	end.
+	map_selector(Selector, false).
 			
 map_projection(Projection) ->
 	map_selector(Projection).
@@ -266,20 +258,36 @@ unmap_list([], _MapReferenceFun, Result) ->
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
 
-map_selector([], Result) ->
+map_selector(Selector, IsInnerDoc) ->
+	case is_mapped(Selector) of
+		true ->
+			RecordName = get_type(Selector),
+			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
+			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
+			list_to_tuple(map_selector(SelectorList, IsInnerDoc, []));
+		false ->
+			Selector
+	end.
+			
+map_selector([], _IsInnerDoc, Result) ->
 	Result;
-map_selector([{FieldId, undefined}|Tail], Result) ->
-	true = (FieldId =/= '_id'),
-	map_selector(Tail, Result);
-map_selector([{FieldId, FieldValue}|Tail], Result) ->
+map_selector([{FieldId, undefined}|Tail], IsInnerDoc, Result) ->
+	case IsInnerDoc of
+		true ->
+			true = (FieldId =/= '_id');
+		false ->
+			ok
+	end,
+	map_selector(Tail, IsInnerDoc, Result);
+map_selector([{FieldId, FieldValue}|Tail], IsInnerDoc, Result) ->
 	case is_mapped(FieldValue) of
 		false ->
-			map_selector(Tail, Result ++ [FieldId, FieldValue]);
+			map_selector(Tail, IsInnerDoc, Result ++ [FieldId, FieldValue]);
 		true ->
 			RecordType = get_type(FieldValue),
-			MappedValueList = tuple_to_list(map_selector(FieldValue)),
+			MappedValueList = tuple_to_list(map_selector(FieldValue, true)),
 			MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, has_id(RecordType), []),
-			map_selector(Tail, Result ++ MappedIdValueList)
+			map_selector(Tail, IsInnerDoc, Result ++ MappedIdValueList)
 	end.
 
 concat_field_ids(_FieldId, [], _HasId, Result) ->

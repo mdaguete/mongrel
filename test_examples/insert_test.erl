@@ -39,8 +39,13 @@ test() ->
 			 end),
 	
 	mongrel:do(safe, master, Conn, mongrel_test, fun() ->
-													   mongrel:find(#book{}, #book{title=1},0,0)
+													   mongrel:find(#book{}, #book{title=1})
 			 end).
+	
+	%mongrel:do(safe, master, Conn, mongrel_test, fun() ->
+	%												   mongrel:find_one(#book{title= <<"David Copperfield">>}, #book{author=1}, 1)
+	%		 end).
+	
 
 	%mongo:do(safe, master, Conn, mongrel_test, fun() ->
 	%												   mongrel:delete(#book{title= {'$ne', <<"Grate Expectations">>}}),
