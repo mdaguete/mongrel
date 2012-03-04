@@ -111,6 +111,16 @@ record_with_id_test_() ->
 			  {x, 0, 'y.#type', bar, 'y.#id.#type', foo, 'y.#id.bar', 3} = mongrel_mapper:map_selector(Sel)
      end}.
 
+selector_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  Sel = #bar{msg = -3},
+			  {msg, -3} = mongrel_mapper:map_selector(Sel)
+     end}.
+	
 map_empty_list_projection_test_() ->
 	{setup,
      fun setup/0,
