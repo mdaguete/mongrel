@@ -30,6 +30,8 @@
 		 find/3,
 		 find/4,
 		 find_one/1,
+		 find_one/2,
+		 find_one/3,
 		 insert/1,
 		 insert_all/1,
 		 save/1]).
@@ -90,9 +92,16 @@ find(RecordSelector, RecordProjector, Skip, BatchSize) ->
 	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
 
 find_one(RecordSelector) ->
+	find_one(RecordSelector, []).
+
+find_one(RecordSelector, RecordProjector) ->
+	find_one(RecordSelector, RecordProjector, 0).
+
+find_one(RecordSelector, RecordProjector, Skip) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
-	{Res} = mongo:find_one(Collection, Selector),
+	Projector = mongrel_mapper:map_projection(RecordProjector),
+	{Res} = mongo:find_one(Collection, Selector, Projector, Skip),
 	CallbackFunc = fun(Coll, Id) ->
 						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
 						   Reference
