@@ -124,7 +124,7 @@ map_selector(Selector) ->
 			RecordName = get_type(Selector),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(map_selector(SelectorList, []));
+			list_to_tuple(map_spm(SelectorList, false, []));
 		false ->
 			Selector
 	end.
@@ -132,9 +132,26 @@ map_selector(Selector) ->
 map_projection(Projection) ->
 	map_selector(Projection).
 
-map_modifier(Modifier) ->
-	map_selector(Modifier).
-
+map_modifier({ModifierKey, ModifierValue}) when is_tuple(ModifierValue) ->
+	case is_mapped(ModifierValue) of
+		false ->
+			{ModifierKey, ModifierValue};
+		true ->
+			RecordName = get_type(ModifierValue),
+			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
+			ModifierList = [{FieldId, get_field(ModifierValue, FieldId)} || FieldId <- FieldIds],
+			{ModifierKey, list_to_tuple(map_spm(ModifierList, true, []))}
+	end;
+map_modifier(Modifier) when is_tuple(Modifier) ->
+	case is_mapped(Modifier) of
+		false ->
+			Modifier;
+		true ->
+			RecordName = get_type(Modifier),
+			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
+			ModifierList = [{FieldId, get_field(Modifier, FieldId)} || FieldId <- FieldIds],
+			list_to_tuple(map_spm(ModifierList, true, []))
+	end.
 
 %% Server functions
 
@@ -266,19 +283,25 @@ unmap_list([], _MapReferenceFun, Result) ->
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
 
-map_selector([], Result) ->
+map_spm([], _IsModifier, Result) ->
 	Result;
-map_selector([{_FieldId, undefined}|Tail], Result) ->
-	map_selector(Tail, Result);
-map_selector([{FieldId, FieldValue}|Tail], Result) ->
+map_spm([{_FieldId, undefined}|Tail], IsModifier, Result) ->
+	map_spm(Tail, IsModifier, Result);
+map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) ->
 	case is_mapped(FieldValue) of
 		false ->
-			map_selector(Tail, Result ++ [FieldId, FieldValue]);
+			map_spm(Tail, IsModifier, Result ++ [FieldId, FieldValue]);
 		true ->
 			RecordType = get_type(FieldValue),
-			MappedValueList = tuple_to_list(map_selector(FieldValue)),
-			MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, has_id(RecordType), []),
-			map_selector(Tail, Result ++ MappedIdValueList)
+			case IsModifier of
+				false ->
+					MappedValueList = tuple_to_list(map_selector(FieldValue)),
+					MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, has_id(RecordType), []);
+				true ->
+					MappedValueList = tuple_to_list(map_modifier(FieldValue)),
+					MappedIdValueList = concat_field_ids(FieldId, MappedValueList, has_id(RecordType), [])
+			end,
+			map_spm(Tail, IsModifier, Result ++ MappedIdValueList)
 	end.
 
 concat_field_ids(_FieldId, [], _HasId, Result) ->

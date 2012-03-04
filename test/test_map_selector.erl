@@ -20,6 +20,7 @@
 -record(coords, {x, y, z}).
 -record(foo, {bar, baz, unused}).
 -record(bar, {'_id', msg}).
+-record(baz, {y, z}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -121,24 +122,24 @@ selector_with_id_test_() ->
 			  {msg, -3} = mongrel_mapper:map_selector(Sel)
      end}.
 
-map_modifier_nested_record_with_non_id_not_set_test_() ->
+map_selector_nested_record_with_non_id_not_set_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  {'x.#type', bar} = mongrel_mapper:map_modifier(#coords{x = #bar{}})
+			  {'x.#type', bar} = mongrel_mapper:map_selector(#coords{x = #bar{}})
      end}.
 
-map_modifier_nested_record_with_non_id_set_test_() ->
+map_selector_nested_record_with_non_id_set_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  ?assertError(_, mongrel_mapper:map_modifier(#coords{x = #bar{msg = 90}}))
+			  ?assertError(_, mongrel_mapper:map_selector(#coords{x = #bar{msg = 90}}))
      end}.
 
 map_empty_list_projection_test_() ->
@@ -172,7 +173,7 @@ map_modifier_not_record_test_() ->
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  {foo, 3, bar, 5} = mongrel_mapper:map_modifier({foo, 3, bar, 5})
+			  {'$inc', {foo, 3}} = mongrel_mapper:map_modifier({'$inc', {foo, 3}})
      end}.
 	
 map_modifier_record_test_() ->
@@ -181,7 +182,7 @@ map_modifier_record_test_() ->
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  {x, {'$inc', 1}} = mongrel_mapper:map_modifier(#coords{x = {'$inc', 1}})
+			  {'$inc', {x, 1}} = mongrel_mapper:map_modifier({'$inc', #coords{x=1}})
      end}.
 	
 map_modifier_nested_record_test_() ->
@@ -191,16 +192,16 @@ map_modifier_nested_record_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
-			  {'x.#type', foo, 'x.bar', 3} = mongrel_mapper:map_modifier(#coords{x = #foo{bar=3}})
+			  {'$set', {'x.bar', 3}} = mongrel_mapper:map_modifier({'$set', #coords{x = #foo{bar=3}}})
      end}.
 
-map_modifier_nested_record_with_id_test_() ->
+map_modifier_deep_nested_record_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  {'x.#type', bar, 'x.#id', 5} = mongrel_mapper:map_modifier(#coords{x = #bar{'_id'=5}})
+			  mongrel_mapper:add_mapping(?mapping(foo)),
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			  {'$set', {'x.bar.y', 7}} = mongrel_mapper:map_modifier({'$set', #coords{x = #foo{bar=#baz{y=7}}}})
      end}.
-	
