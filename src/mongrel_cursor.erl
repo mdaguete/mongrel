@@ -22,6 +22,7 @@
 %% External exports
 -export([cursor/6,
 		 next/1,
+		 rest/1,
 		 get_mongo_cursor/1]).
 
 %% gen_server callbacks
@@ -41,6 +42,9 @@ cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
 
 next(Cursor) ->
 	gen_server:call(Cursor, next, infinity).
+
+rest(Cursor) ->
+	gen_server:call(Cursor, rest, infinity).
 
 get_mongo_cursor(Cursor) ->
 	gen_server:call(Cursor, get_mongo_cursor, infinity).
@@ -74,6 +78,21 @@ handle_call(next, _From, State) ->
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
 			{reply, Reply, State}
 	end;
+handle_call(rest, _From, State) ->
+	CallbackFunc = fun(Coll, Id) ->
+						   ReadMode = State#state.read_mode,
+						   WriteMode = State#state.write_mode,
+						   Connection = State#state.connection,
+						   Database = State#state.database,
+						   {ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database,
+												fun() ->
+														{Reference} = mongo:find_one(Coll, {'_id', Id}),
+														Reference
+												end),
+						   Res
+				   end,
+	Docs = rest(State#state.mongo_cursor, State#state.collection, CallbackFunc, []),
+	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
 	{reply, State#state.mongo_cursor, State}.
 
@@ -104,4 +123,13 @@ code_change(_OldVersion, State, _Extra) ->
 
 
 %%% Internal functions
+rest(MongoCursor, Collection, CallbackFunc, Docs) ->
+	case mongo_cursor:next(MongoCursor) of
+		{} ->
+			Docs;
+		{Doc} ->
+			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunc),
+			rest(MongoCursor, Collection, CallbackFunc, Docs ++ [Record])
+	end.
 
+	
