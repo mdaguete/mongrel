@@ -19,7 +19,7 @@
 %% records used for testing.
 -record(coords, {x, y, z}).
 -record(foo, {bar, baz, unused}).
--record(bar, {'_id', msg= <<"hello">>}).
+-record(bar, {'_id', msg}).
 
 setup() ->
     T = ets:new(myets,[named_table,public]), 
@@ -120,7 +120,27 @@ selector_with_id_test_() ->
 			  Sel = #bar{msg = -3},
 			  {msg, -3} = mongrel_mapper:map_selector(Sel)
      end}.
-	
+
+map_modifier_nested_record_with_non_id_not_set_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  {'x.#type', bar} = mongrel_mapper:map_modifier(#coords{x = #bar{}})
+     end}.
+
+map_modifier_nested_record_with_non_id_set_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			  ?assertError(_, mongrel_mapper:map_modifier(#coords{x = #bar{msg = 90}}))
+     end}.
+
 map_empty_list_projection_test_() ->
 	{setup,
      fun setup/0,
@@ -182,15 +202,5 @@ map_modifier_nested_record_with_id_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  {'x.#type', bar, 'x.#id', 5} = mongrel_mapper:map_modifier(#coords{x = #bar{'_id'=5}})
-     end}.
-	
-map_modifier_nested_record_with_id_not_set_test_() ->
-	{setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  ?assertError(_, mongrel_mapper:map_modifier(#coords{x = #bar{}}))
      end}.
 	

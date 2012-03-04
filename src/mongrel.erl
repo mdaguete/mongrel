@@ -34,6 +34,7 @@
 		 find_one/3,
 		 insert/1,
 		 insert_all/1,
+		 modify/2,
 		 save/1]).
 
 %% gen_server callbacks
@@ -106,7 +107,7 @@ find_one(RecordSelector, RecordProjector, Skip) ->
 						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
 						   Reference
 				   end,
-	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
+	{mongrel_mapper:unmap(Collection, Res, CallbackFunc)}.
 
 insert(Record) ->
 	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
@@ -116,6 +117,12 @@ insert(Record) ->
 insert_all(Records) ->
 	[insert(Record) || Record <- Records].
 	
+modify(RecordSelector, RecordModifier) ->
+	Collection = mongrel_mapper:get_type(RecordSelector),
+	Selector = mongrel_mapper:map_selector(RecordSelector),
+	Modifier = mongrel_mapper:map_projection(RecordModifier),
+	mongo:modify(Collection, Selector, Modifier).
+
 save(Record) ->
 	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
