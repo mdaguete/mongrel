@@ -20,7 +20,8 @@
 -behaviour(gen_server).
 
 %% External exports
--export([cursor/6,
+-export([close/1,
+		 cursor/6,
 		 next/1,
 		 rest/1,
 		 get_mongo_cursor/1]).
@@ -48,6 +49,9 @@ rest(Cursor) ->
 
 get_mongo_cursor(Cursor) ->
 	gen_server:call(Cursor, get_mongo_cursor, infinity).
+
+close(Cursor) ->
+	gen_server:call(Cursor, close, infinity).
 	
 %% Server functions
 
@@ -94,7 +98,10 @@ handle_call(rest, _From, State) ->
 	Docs = rest(State#state.mongo_cursor, State#state.collection, CallbackFunc, []),
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
-	{reply, State#state.mongo_cursor, State}.
+	{reply, State#state.mongo_cursor, State};
+handle_call(close, _From, State) ->
+	mongo:close_cursor(State#state.mongo_cursor),
+	{stop, normal, ok, State}.
 
 
 %% @doc Responds asynchronously to messages.
