@@ -13,7 +13,7 @@
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
 %%% @doc Mongrel application. This module implements the application behaviour. On startup
-%%%      the application starts the mongrel supervisor, mongrel_sup.
+%%%      the application creates an ETS table and starts the mongrel supervisor (mongrel_sup).
 %%% @end
 
 -module(mongrel_app).
@@ -27,15 +27,18 @@
 
 %% @doc Starts the application. This function creates an ETS table that is 
 %%      passed to the mongrel supervisor. The table lives the for the 
-%%      lifetime of the application.
-%% @spec start(any(), list()) -> {ok, pid()} | {error, any()}
+%%      lifetime of the application. The table is used to store information
+%%      needed to map records to documents.
+%%
+%% @spec start(any(), any()) -> {ok, pid()} | {error, any()}
 %% @end
 start(_Type, _StartArgs) ->
 	TableId = ets:new(mongrel_table, [public]),
 	mongrel_sup:start_link(TableId).
 
 %% @doc Stops the application.
+%%
 %% @spec stop(any()) -> ok
 %% @end
 stop(_State) ->
-    ok.
+	ok.
