@@ -147,16 +147,34 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	Database = get(database),
 	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
 
-find_one(RecordSelector) ->
-	find_one(RecordSelector, []).
+%% @doc Finds the first document that matches a selector and returns the document.
+%%
+%% @spec find(record()) -> record()
+%% @end
+find_one(SelectorRecord) ->
+	find_one(SelectorRecord, []).
 
-find_one(RecordSelector, RecordProjector) ->
-	find_one(RecordSelector, RecordProjector, 0).
+%% @doc Finds the first document that matches a selector and returns a
+%%      projection of the document. The empty projection ([]) means
+%%      that all fields in the document are populated.  The projection can be 
+%%      passed as a mapped record or as a Mongo tuple consisting of alternating 
+%%      keys and values.
+%%
+%% @spec find(record(), record() | tuple()) -> record()
+%% @end
+find_one(SelectorRecord, ProjectorRecord) ->
+	find_one(SelectorRecord, ProjectorRecord, 0).
 
-find_one(RecordSelector, RecordProjector, Skip) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
-	Projector = mongrel_mapper:map_projection(RecordProjector),
+%% @doc Finds a document that matches a selector and returns a
+%%      projection of the document after skipping a certain number of 
+%%      matching documents.
+%%
+%% @spec find(record(), record() | tuple(), integer()) -> record()
+%% @end
+find_one(SelectorRecord, ProjectorRecord, Skip) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	{Res} = mongo:find_one(Collection, Selector, Projector, Skip),
 	CallbackFunc = fun(Coll, Id) ->
 						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
