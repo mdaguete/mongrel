@@ -121,9 +121,21 @@ find(SelectorRecord) ->
 find(SelectorRecord, ProjectorRecord) ->
 	find(SelectorRecord, ProjectorRecord, 0).
 
+%% @doc Finds all documents that match a selector and returns a cursor
+%%      of a projection result that skips a specified number of matching
+%%      documents. 
+%%
+%% @spec find(record(), record() | tuple(), integer()) -> cursor()
+%% @end
 find(SelectorRecord, ProjectorRecord, Skip) ->
 	find(SelectorRecord, ProjectorRecord, Skip, 0).
 
+%% @doc Finds all documents that match a selector and returns a cursor
+%%      of a projection result that skips a specified number of matching
+%%      documents.  The cursor retrieves results in the specified batch size.
+%%
+%% @spec find(record(), record() | tuple(), integer(), integer()) -> cursor()
+%% @end
 find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	Collection = mongrel_mapper:get_type(SelectorRecord),
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
