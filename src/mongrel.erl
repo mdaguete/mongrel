@@ -204,15 +204,21 @@ insert(Record) ->
 insert_all(Records) ->
 	[insert(Record) || Record <- Records].
 	
-modify(RecordSelector, RecordModifier) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
-	Modifier = mongrel_mapper:map_modifier(RecordModifier),
+%% @doc Updates selected documents using a modifier. The modifier can be specified as a {key, value}
+%%      tuple where the key is a modifier and the value is a mapped record (e.g {'$set', #foo{bar=3}}) 
+%%      or as a mongo modifier tuple (e.g. {'$set', {bar, 3}).
+%%
+%% @spec modify(record(), record()|tuple()) -> ok
+%% @end
+modify(SelectorRecord, ModifierRecord) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	Modifier = mongrel_mapper:map_modifier(ModifierRecord),
 	mongo:modify(Collection, Selector, Modifier).
 
-replace(RecordSelector, NewRecord) ->
+replace(SelectorRecord, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:replace(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
