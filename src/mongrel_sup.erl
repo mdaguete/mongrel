@@ -12,7 +12,7 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel supervisor. This module starts up the mongrel server and
+%%% @doc Mongrel supervisor. This module starts up the mongrel_mapper server and
 %%%      restarts the server if it crashes.
 %%% @end
 
