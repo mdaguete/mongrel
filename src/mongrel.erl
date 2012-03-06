@@ -85,11 +85,17 @@ delete(SelectorRecord) ->
 %%
 %% @spec delete_one(record()) -> ok
 %% @end
-delete_one(RecordSelector) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
+delete_one(SelectorRecord) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:delete_one(Collection, Selector).
 
+%% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
+%%      An 'action' is anonymous function that takes no arguments. The fun will usually invoke functions
+%%      to do inserts, finds, modifies, deletes, etc.
+%%
+%% @spec do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}    
+%% @end
 do(WriteMode, ReadMode, Connection, Database, Action) ->
 	{ok, Pid} = gen_server:start_link(?MODULE, [WriteMode, ReadMode, Connection, Database], []),
 	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
