@@ -72,7 +72,7 @@ count(SelectorRecord, Limit) ->
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:count(Collection, Selector, Limit).
 	
-%% @doc Deletes all documents that match some selector.
+%% @doc Deletes all documents that match a selector.
 %%
 %% @spec delete(record()) -> ok
 %% @end
@@ -81,7 +81,7 @@ delete(SelectorRecord) ->
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:delete(Collection, Selector).
 
-%% @doc Deletes the first document that matches some selector.
+%% @doc Deletes the first document that matches a selector.
 %%
 %% @spec delete_one(record()) -> ok
 %% @end
@@ -97,22 +97,37 @@ delete_one(SelectorRecord) ->
 %% @spec do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}    
 %% @end
 do(WriteMode, ReadMode, Connection, Database, Action) ->
+	%% Since we need to store state information, we spawn a new process for this
+	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
+	%% the original state.
 	{ok, Pid} = gen_server:start_link(?MODULE, [WriteMode, ReadMode, Connection, Database], []),
 	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
 
-find(RecordSelector) ->
-	find(RecordSelector, []).
+%% @doc Finds all documents that match a selector and returns a cursor.
+%%
+%% @spec find(record()) -> cursor()
+%% @end
+find(SelectorRecord) ->
+	find(SelectorRecord, []).
 
-find(RecordSelector, RecordProjector) ->
-	find(RecordSelector, RecordProjector, 0).
+%% @doc Finds all documents that match a selector and returns a cursor
+%%      of a projection result. The projection can be passed as a mapped
+%%      record or as a Mongo tuple consisting of alternating keys and values.
+%%      An empty list ([]) indicates that the full projection of documents must
+%%      be returned.
+%%
+%% @spec find(record(), record() | tuple()) -> cursor()
+%% @end
+find(SelectorRecord, ProjectorRecord) ->
+	find(SelectorRecord, ProjectorRecord, 0).
 
-find(RecordSelector, RecordProjector, Skip) ->
-	find(RecordSelector, RecordProjector, Skip, 0).
+find(SelectorRecord, ProjectorRecord, Skip) ->
+	find(SelectorRecord, ProjectorRecord, Skip, 0).
 
-find(RecordSelector, RecordProjector, Skip, BatchSize) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
-	Projector = mongrel_mapper:map_projection(RecordProjector),
+find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
 	WriteMode = get(write_mode),
 	ReadMode = get(read_mode),
