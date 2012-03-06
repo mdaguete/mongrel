@@ -216,12 +216,21 @@ modify(SelectorRecord, ModifierRecord) ->
 	Modifier = mongrel_mapper:map_modifier(ModifierRecord),
 	mongo:modify(Collection, Selector, Modifier).
 
+%% @doc Replaces the first document that matches the selector with a new document.
+%%
+%% @spec replace(record(), record()) -> ok
+%% @end
 replace(SelectorRecord, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:replace(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
+%% @doc Replaces the first document that matches the selector with a new document. If
+%%      document can be matched, the new document is inserted.
+%%
+%% @spec repsert(record(), record()) -> ok
+%% @end
 repsert(RecordSelector, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
