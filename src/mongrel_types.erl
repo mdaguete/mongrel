@@ -12,21 +12,12 @@
 
 -module(mongrel_types).
 
-%%
-%% Include files
-%%
-
-
-%%
 %% Exported Functions
-%%
 -export([binary/1,
 		 uuid/1,
 		 md5/1]).
 
-%%
-%% API Functions
-%%
+%% External functions
 binary(X) when is_binary(X) ->
 	{bin, bin, X}.
 
@@ -35,8 +26,3 @@ uuid(X) when is_binary(X) ->
 
 md5(X) when is_binary(X) ->
 	{bin, md5, X}.
-
-%%
-%% Local Functions
-%%
-

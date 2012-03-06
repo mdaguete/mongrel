@@ -12,7 +12,11 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel API. This module provides CRUD operations.
+%%% @doc Mongrel API. This module provides functions for creating, reading, updating and deleting
+%%       documents. The functions exposed are similar to the CRUD functions exposed by the
+%%       mongo API of the MongoDB driver. Typically, the mongo driver functions require both
+%%       collection and document arguments. The mongrel functions usually require one fewer
+%%       argument since the collection and document contents are both encapsulated in a record.
 %%% @end
 
 -module(mongrel).
@@ -50,14 +54,22 @@
 -record(state, {}).
 
 %% External functions
-count(RecordSelector) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
-	mongo:count(Collection, Selector).
 
-count(RecordSelector, Limit) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
+%% @doc Counts the number of documents that match some selector.
+%%
+%% @spec count(record()) -> integer()
+%% @end
+count(SelectorRecord) ->
+	count(SelectorRecord, 0).
+
+%% @doc Counts the number of documents that match some selector up to a specified
+%%      maximum. A limit of 0 means that all matching documents are counted.
+%%
+%% @spec count(record(), integer()) -> integer()
+%% @end
+count(SelectorRecord, Limit) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:count(Collection, Selector, Limit).
 	
 delete(RecordSelector) ->
