@@ -262,7 +262,7 @@ init([WriteMode, ReadMode, Connection, Database]) ->
     {ok, #state{}}.
 
 %% @doc Responds synchronously to server calls.
-%% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), NewState::tuple()}
+%% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), State::tuple()}
 %% @end
 handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
     Reply = mongo:do(WriteMode, ReadMode, Connection, Database, Action),
@@ -287,7 +287,7 @@ terminate(_Reason, _State) ->
 	ok.
 
 %% @doc Responds to code changes.
-%% @spec code_change(any(), any(), any()) -> {ok, State}
+%% @spec code_change(any(), State::tuple(), any()) -> {ok, State::tuple()}
 %% @end
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
