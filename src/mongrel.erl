@@ -211,7 +211,3 @@ terminate(_Reason, _State) ->
 %% @end
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
-
-
-%%% Internal functions
-
