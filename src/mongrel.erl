@@ -149,7 +149,7 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 
 %% @doc Finds the first document that matches a selector and returns the document.
 %%
-%% @spec find(record()) -> record()
+%% @spec find_one(record()) -> record()
 %% @end
 find_one(SelectorRecord) ->
 	find_one(SelectorRecord, []).
@@ -160,7 +160,7 @@ find_one(SelectorRecord) ->
 %%      passed as a mapped record or as a Mongo tuple consisting of alternating 
 %%      keys and values.
 %%
-%% @spec find(record(), record() | tuple()) -> record()
+%% @spec find_one(record(), record() | tuple()) -> record()
 %% @end
 find_one(SelectorRecord, ProjectorRecord) ->
 	find_one(SelectorRecord, ProjectorRecord, 0).
@@ -169,7 +169,7 @@ find_one(SelectorRecord, ProjectorRecord) ->
 %%      projection of the document after skipping a certain number of 
 %%      matching documents.
 %%
-%% @spec find(record(), record() | tuple(), integer()) -> record()
+%% @spec find_one(record(), record() | tuple(), integer()) -> record()
 %% @end
 find_one(SelectorRecord, ProjectorRecord, Skip) ->
 	Collection = mongrel_mapper:get_type(SelectorRecord),
@@ -182,11 +182,25 @@ find_one(SelectorRecord, ProjectorRecord, Skip) ->
 				   end,
 	{mongrel_mapper:unmap(Collection, Res, CallbackFunc)}.
 
+%% @doc Inserts a record into a collection with the same name as the record type. If the 
+%%      record contains nested records with '_id' fields, the nested documents are upserted
+%%      into their appropriate collections as well. The ID of the inserted document is
+%%      returned.
+%%
+%% @spec insert(record()) -> bson:value()
+%% @end
 insert(Record) ->
 	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
 	mongo:insert(Collection, Document).
 
+%% @doc Inserts a list of records into collections with the same name as the corresponding
+%%      record type. If a record contains nested records with '_id' fields, the nested documents are 
+%%      upsrted into their appropriate collections as well. A list of IDs of the inserted documents is
+%%      returned.
+%%
+%% @spec insert_all(list(record())) -> list(bson:value())
+%% @end
 insert_all(Records) ->
 	[insert(Record) || Record <- Records].
 	
@@ -208,6 +222,12 @@ repsert(RecordSelector, NewRecord) ->
 	mongo:repsert(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
+%% @doc Upserts a record into a collection with the same name as the record type. If the 
+%%      record contains nested records with '_id' fields, the nested documents are upserted
+%%      into their appropriate collections as well.
+%%
+%% @spec save(record()) -> ok
+%% @end
 save(Record) ->
 	{{Collection, Document}, ChildDocuments} = mongrel_mapper:map(Record),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
