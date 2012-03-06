@@ -12,7 +12,7 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel mapping server. This module provides the Record/Mapping API.
+%%% @doc Mongrel mapping server. This module provides the Record/Document Mapping API.
 %%% @end
 
 -module(mongrel_mapper).
@@ -51,6 +51,11 @@
 -record(state, {ets_table_id}).
 
 %% External functions
+
+%% @doc Spawns a registered process on the local node that stores the structure of records as in an ETS table.
+%%
+%% @spec start_link(integer()) -> {ok, pid()}    
+%% @end
 start_link(EtsTableId) ->
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 

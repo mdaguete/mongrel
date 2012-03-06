@@ -266,6 +266,7 @@ init([{WriteMode, ReadMode, Connection, Database}]) ->
 
 %% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
 %%      Action of the do/5 function in this process. The process is stopped after the Action completes.
+%%
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), State::tuple()}
 %% @end
 handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
