@@ -72,11 +72,19 @@ count(SelectorRecord, Limit) ->
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:count(Collection, Selector, Limit).
 	
-delete(RecordSelector) ->
-	Collection = mongrel_mapper:get_type(RecordSelector),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
+%% @doc Deletes all documents that match some selector.
+%%
+%% @spec delete(record()) -> ok
+%% @end
+delete(SelectorRecord) ->
+	Collection = mongrel_mapper:get_type(SelectorRecord),
+	Selector = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:delete(Collection, Selector).
 
+%% @doc Deletes the first document that matches some selector.
+%%
+%% @spec delete_one(record()) -> ok
+%% @end
 delete_one(RecordSelector) ->
 	Collection = mongrel_mapper:get_type(RecordSelector),
 	Selector = mongrel_mapper:map_selector(RecordSelector),
