@@ -100,7 +100,7 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
-	{ok, Pid} = gen_server:start_link(?MODULE, [WriteMode, ReadMode, Connection, Database], []),
+	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database}], []),
 	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
@@ -196,7 +196,7 @@ insert(Record) ->
 
 %% @doc Inserts a list of records into collections with the same name as the corresponding
 %%      record type. If a record contains nested records with '_id' fields, the nested documents are 
-%%      upsrted into their appropriate collections as well. A list of IDs of the inserted documents is
+%%      upserted into their appropriate collections as well. A list of IDs of the inserted documents is
 %%      returned.
 %%
 %% @spec insert_all(list(record())) -> list(bson:value())
@@ -251,30 +251,34 @@ save(Record) ->
 
 %% Server functions
 
-%% @doc Initializes the server with a MongoDB connection.
-%% @spec init(MongoDbConnection) -> {ok, State::tuple()}
+%% @doc Initializes the server with a write mode, read mode, a connection and database.
+%%      The parameters are stored in the process dictionary so that they can be used
+%%      if a connection is needed by a cursor to access collections.
+%%  
+%% @spec init(ConnectionParameters::[{WriteMode, ReadMode, Connection, Database}]) -> {ok, State::tuple()}
 %% @end
-init([WriteMode, ReadMode, Connection, Database]) ->
+init([{WriteMode, ReadMode, Connection, Database}]) ->
 	put(write_mode, WriteMode),
 	put(read_mode, ReadMode),
 	put(connection, Connection),
 	put(database, Database),
     {ok, #state{}}.
 
-%% @doc Responds synchronously to server calls.
+%% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
+%%      Action of the do/5 function in this process. The process is stopped after the Action completes.
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), State::tuple()}
 %% @end
 handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
     Reply = mongo:do(WriteMode, ReadMode, Connection, Database, Action),
     {stop, normal, Reply, State}.
 
-%% @doc Responds asynchronously to messages.
+%% @doc Responds asynchronously to messages. The server ignores any asynchronous messages.
 %% @spec handle_cast(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
-%% @doc Responds to non-OTP messages.
+%% @doc Responds to out-of-band messages. The server ignores any such messages.
 %% @spec handle_info(any(), tuple()) -> {no_reply, State}
 %% @end
 handle_info(_Info, State) ->
@@ -286,7 +290,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, _State) ->
 	ok.
 
-%% @doc Responds to code changes.
+%% @doc Responds to code changes. Any code changes are ignored (the State remains unchanged).
 %% @spec code_change(any(), State::tuple(), any()) -> {ok, State::tuple()}
 %% @end
 code_change(_OldVersion, State, _Extra) ->
