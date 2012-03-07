@@ -59,10 +59,18 @@
 start_link(EtsTableId) ->
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 
+%% @doc Specfies the field identifiers associated with a record name.
+%%
+%% @spec add_mapping({atom(), FieldIds::[atom()]}) -> true    
+%% @end
 add_mapping({RecordName, FieldIds}) when is_atom(RecordName) ->
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
 	server_call(add_mapping, {RecordName, FieldIds}).
 
+%% @doc Gets the field identifiers associated with a record name.
+%%
+%% @spec get_mapping(atom()) -> [atom()]
+%% @end
 get_mapping(RecordName) when is_atom(RecordName) ->
 	[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 	FieldIds.
@@ -108,6 +116,11 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 	UpdatedRecordList = set_field(RecordList, FieldIds, FieldId, FieldValue, []),
 	list_to_tuple([RecordName|UpdatedRecordList]).
 
+%% @doc A convenience function that extracts the first element of a tuple. If the
+%%      tuple is a record, the first element contains the record name.
+%%
+%% @spec get_type(tuple()) -> any()
+%% @end
 get_type(Record) ->
 	true = is_mapped(Record),
 	[RecordName|_] = tuple_to_list(Record),

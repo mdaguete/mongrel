@@ -5,7 +5,10 @@
 do_find(Connection) ->
 	mongo:do(safe, master, Connection, mongrel_test, 
 			 fun() ->
-					 mongo:find(author, {})
+					 C = mongo:find(author, {}),
+					 %mongo_cursor:close(C),
+					 %mongo_cursor:rest(C),
+					 C
 			 end				 
 			).
 

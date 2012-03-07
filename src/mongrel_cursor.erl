@@ -13,6 +13,9 @@
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
 %%% @doc Mongrel cursor process. This module provides functions for getting documents from a cursor.
+%%%      Unlike a mongo cursor, this cursor may need to read from the database when the cursor
+%%%      is read since the document that is read may reference nested documents that need to be 
+%%%      fetched.
 %%% @end
 
 -module(mongrel_cursor).
