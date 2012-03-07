@@ -30,7 +30,5 @@ populate() ->
 			   fun() ->
 					   mongrel:delete(#author{}),
 					   mongrel:delete(#book{}),
-					   %mongrel:insert(Book1),
-					   mongrel:insert_all([Book1, Book2]),
-					   mongrel:find(#book{})
+					   mongrel:insert_all([Book1, Book2])
 			   end).

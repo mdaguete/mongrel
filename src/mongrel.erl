@@ -51,7 +51,7 @@
 		 terminate/2, 
 		 code_change/3]).
 
--record(state, {}).
+-record(state, {write_mode, read_mode, connection, database}).
 
 %% External functions
 
@@ -258,11 +258,7 @@ save(Record) ->
 %% @spec init(ConnectionParameters::[{WriteMode, ReadMode, Connection, Database}]) -> {ok, State::tuple()}
 %% @end
 init([{WriteMode, ReadMode, Connection, Database}]) ->
-	put(write_mode, WriteMode),
-	put(read_mode, ReadMode),
-	put(connection, Connection),
-	put(database, Database),
-    {ok, #state{}}.
+    {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database}}.
 
 %% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
 %%      Action of the do/5 function in this process. The process is stopped after the Action completes.
@@ -270,7 +266,14 @@ init([{WriteMode, ReadMode, Connection, Database}]) ->
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), State::tuple()}
 %% @end
 handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
-    Reply = mongo:do(WriteMode, ReadMode, Connection, Database, Action),
+    Reply = mongo:do(WriteMode, ReadMode, Connection, Database,
+					 fun() ->
+							 put(write_mode, State#state.write_mode),
+							 put(read_mode, State#state.read_mode),
+							 put(connection, State#state.connection),
+							 put(database, State#state.database),
+							 Action()
+					 end),
     {stop, normal, Reply, State}.
 
 %% @doc Responds asynchronously to messages. The server ignores any asynchronous messages.
