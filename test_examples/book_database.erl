@@ -1,6 +1,6 @@
 -module(book_database).
 
--export([populate/0, get_all/0]).
+-export([populate/0, get_all/0, replace/0]).
 
 -include("mongrel_macros.hrl").
 
@@ -10,6 +10,7 @@
 -record(review, {star_rating, comment}).
 
 populate() ->
+	% The mongrel application can't be started until the mongodb.
 	application:start(mongodb),
 	application:start(mongrel),
 	
@@ -51,3 +52,11 @@ get_all() ->
 					   Cursor = mongrel:find(#book{}),
 					   mongrel_cursor:rest(Cursor)
 			   end).
+
+replace() ->
+	{ok, Connection} = mongo:connect(localhost),
+	mongrel:do(safe, master, Connection, mongrel_books, 
+			   fun() ->
+					   mongrel:modify(#book{title = <<"David Copperfield">>}, {'$set', #book{title = <<"David Coperfield">>}})
+			   end).
+	
