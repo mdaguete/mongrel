@@ -75,6 +75,11 @@ get_mapping(RecordName) when is_atom(RecordName) ->
 	[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 	FieldIds.
 
+%% @doc Returns whether a record is mapped. The argument can be either an atom (a possible record name)
+%%      or a tuple (a possible record).
+%%
+%% @spec is_mapped(RecordOrRecordName::atom()|tuple()) -> bool()
+%% @end
 is_mapped(RecordName) when is_atom(RecordName) ->
 	case server_call(get_mapping, RecordName) of
 		[] ->
@@ -93,6 +98,11 @@ is_mapped(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 is_mapped(_) ->
 	false.
 
+%% @doc Returns whether a record has an '_id' field. The argument can be either an atom (a possible record name)
+%%      or a tuple (a possible record).
+%%
+%% @spec has_id(RecordOrRecordName::atom()|tuple()) -> bool()
+%% @end
 has_id(RecordName) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	CheckHasId = fun(FieldId, Result) ->
