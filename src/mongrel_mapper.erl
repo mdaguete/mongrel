@@ -139,22 +139,31 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 %% @doc A convenience function that extracts the first element of a tuple. If the
 %%      tuple is a record, the first element contains the record name.
 %%
-%% @spec get_type(tuple()) -> any()
+%% @spec get_type(record()) -> atom()
 %% @end
 get_type(Record) ->
 	true = is_mapped(Record),
 	[RecordName|_] = tuple_to_list(Record),
 	RecordName.
 
+%% @doc Maps a record to a document. If the record contains child records, they are also mapped.
+%%
+%% @spec map(record()) -> {{atom(), bson:document()}, [{atom(), bson:document()}]}
+%% @end
 map(Record) ->
 	{Document, ChildDocs} = map_record(Record, []),
 	{{get_type(Record), Document}, ChildDocs}.
 
-unmap(RecordName, Tuple, MapReferenceFun) when is_atom(RecordName) ->
+%% @doc Unmaps a document to a record. If the document references nested documents, a callback function
+%%      is called to unmap the nested documents.
+%%
+%% @spec unmap(atom(), bson:document(), fun()) -> record()
+%% @end
+unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
-	TupleList = tuple_to_list(Tuple),
-	InitialTuple = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
-	unmap_record(TupleList, MapReferenceFun, InitialTuple).
+	DocumentList = tuple_to_list(Document),
+	InitialDocument = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
+	unmap_record(DocumentList, MapReferenceFun, InitialDocument).
 
 map_selector(Selector) ->
 	case is_mapped(Selector) of
