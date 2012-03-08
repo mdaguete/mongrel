@@ -113,11 +113,21 @@ has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
 
+%% @doc Gets the value of a field from a record.
+%%
+%% @spec get_field(record(), atom()) -> any()
+%% @end
 get_field(Record, Field) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
 	get_field(FieldIds, FieldValues, Field).
 
+%% @doc Sets the value of a field in a record. If the value is a reference to a document,
+%%      a callback function is invoked to map the document to a record. An updated record
+%%      is returned.
+%%
+%% @spec set_field(record(), atom(), any(), func()) -> record()
+%% @end
 set_field(Record, FieldId, {?TYPE_REF, Collection, ?ID_REF, Id}, MapReferenceFun) ->
 	set_field(Record, FieldId, MapReferenceFun(Collection, Id), MapReferenceFun);
 set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
