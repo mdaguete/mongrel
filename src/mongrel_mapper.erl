@@ -191,6 +191,10 @@ map_selector(SelectorRecord) ->
 map_projection(ProjectionRecord) ->
 	map_selector(ProjectionRecord).
 
+%% @doc Maps a modifier specifying a field to modify to a BSON document
+%%
+%% @spec map_modifier({atom(), record()}) -> bson:document()
+%% @end
 map_modifier({ModifierKey, ModifierValue}) when is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
@@ -221,8 +225,9 @@ map_modifier(Modifier) when is_tuple(Modifier) ->
 init([EtsTableId]) ->
 	{ok, #state{ets_table_id = EtsTableId}}.
 
-%% @doc Responds synchronously to server calls.
-%% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {reply, ok, NewState::tuple()}
+%% @doc Responds synchronously to server calls. This function is invoked when a mapping is
+%%      added.
+%% @spec handle_call(Message::tuple(), From::pid(), State::record()) -> {reply, ok, NewState::record()}
 %% @end
 handle_call({add_mapping, {Key, Value}}, _From, State) ->
 	true = ets:insert(State#state.ets_table_id, {Key, Value}),
@@ -231,26 +236,26 @@ handle_call({get_mapping, Key}, _From, State) ->
 	Reply = ets:lookup(State#state.ets_table_id, Key),
 	{reply, Reply, State}.
 
-%% @doc Responds asynchronously to messages.
-%% @spec handle_cast(any(), tuple()) -> {no_reply, State}
+%% @doc Responds asynchronously to messages. This function should never be invoked.
+%% @spec handle_cast(any(), record()) -> {no_reply, State}
 %% @end
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
-%% @doc Responds to non-OTP messages.
-%% @spec handle_info(any(), tuple()) -> {no_reply, State}
+%% @doc Responds to non-OTP messages. This function should never be invoked.
+%% @spec handle_info(any(), record()) -> {no_reply, State}
 %% @end
 handle_info(_Info, State) ->
 	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
-%% @spec terminate(any(), any()) -> ok
+%% @spec terminate(any(), record()) -> ok
 %% @end
 terminate(_Reason, _State) ->
 	ok.
 
 %% @doc Responds to code changes.
-%% @spec code_change(any(), any(), any()) -> {ok, State}
+%% @spec code_change(any(), record(), any()) -> {ok, State}
 %% @end
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
@@ -342,6 +347,8 @@ unmap_list([], _MapReferenceFun, Result) ->
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
 
+% This generic function can map selectors, projections and modifiers to a BSON document.
+% spm = selector-projection-modifier.
 map_spm([], _IsModifier, Result) ->
 	Result;
 map_spm([{_FieldId, undefined}|Tail], IsModifier, Result) ->
