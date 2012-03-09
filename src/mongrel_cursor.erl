@@ -40,10 +40,26 @@
 -record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout}).
 
 %% External functions
-cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout], []),
+
+%% @doc Creates a cursor using a specified connection to a database collection. The cursor is
+%%      configured to timeout after a specified length of inactivity. If the cursor has to return
+%%      a document containing nested documents, the connection parameters are used to read the
+%%      nested documents.
+%%
+%% @spec cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),
+%%              mongo:connection()|mongo:rs_connection(), mongo:db(),
+%%              mongo:collection(), integer()) -> pid()
+%% @end
+cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, TimeoutInMilliseconds) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
+												Database, Collection, TimeoutInMilliseconds], []),
 	Pid.
 
+%% @doc Returns the next record from the cursor or an empty tuple if no more documents
+%%      are available.
+%%
+%% @spec next(cursor()) -> record() | {}
+%% @end
 next(Cursor) ->
 	gen_server:call(Cursor, next, infinity).
 
@@ -59,6 +75,7 @@ close(Cursor) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
+%%
 %% @spec init(list()) -> {ok, State::tuple(), Timeout::integer()}
 %% @end
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
