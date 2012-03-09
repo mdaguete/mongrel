@@ -37,7 +37,7 @@
 		 terminate/2, 
 		 code_change/3]).
 
--record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection}).
+-record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout}).
 
 %% External functions
 cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
@@ -72,15 +72,16 @@ handle_call(next, _From, State) ->
 		{Document} ->
 			CallbackFunc = construct_callback_function(State),
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
-			% TODO timeout?
-			{reply, Reply, State}
+			{reply, Reply, State, State#state.timeout}
 	end;
 handle_call(rest, _From, State) ->
 	Docs = rest(State, []),
+	% TODO close mongo cursor
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
-	{reply, State#state.mongo_cursor, State};
+	{reply, State#state.mongo_cursor, State, State#state.timeout};
 handle_call(close, _From, State) ->
+	% TODO move to terminate
 	mongo:close_cursor(State#state.mongo_cursor),
 	{stop, normal, ok, State}.
 
