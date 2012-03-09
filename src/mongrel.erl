@@ -29,6 +29,7 @@
 		 delete/1,
 		 delete_one/1,
 		 do/5,
+		 do/6,
 		 find/1,
 		 find/2,
 		 find/3,
@@ -51,7 +52,7 @@
 		 terminate/2, 
 		 code_change/3]).
 
--record(state, {write_mode, read_mode, connection, database}).
+-record(state, {write_mode, read_mode, connection, database, cursor_timeout}).
 
 %% External functions
 
@@ -94,14 +95,26 @@ delete_one(SelectorRecord) ->
 %%      An 'action' is anonymous function that takes no arguments. The fun will usually invoke functions
 %%      to do inserts, finds, modifies, deletes, etc.
 %%
-%% @spec do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}    
+%% @spec do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), 
+%%          mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}    
 %% @end
 do(WriteMode, ReadMode, Connection, Database, Action) ->
+	do(WriteMode, ReadMode, Connection, Database, infinity, Action).
+
+%% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
+%%      An 'action' is anonymous function that takes no arguments. The fun will usually invoke functions
+%%      to do inserts, finds, modifies, deletes, etc. A timeout for cursors can be specified if
+%%      cursors are created in the action.
+%%
+%% @spec do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), 
+%%          mongo:db(), integer(), mongo:action()) -> {ok, any()}|{failure, any()}    
+%% @end
+do(WriteMode, ReadMode, Connection, Database, CursorTimeout, Action) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
-	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database}], []),
-	gen_server:call(Pid, {do, WriteMode, ReadMode, Connection, Database, Action}, infinity).
+	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database, CursorTimeout}], []),
+	gen_server:call(Pid, {do, Action}).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
 %%
@@ -145,7 +158,8 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	ReadMode = get(read_mode),
 	Connection = get(connection),
 	Database = get(database),
-	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, infinity).
+	CursorTimeout = get(cursor_timeout),
+	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, CursorTimeout).
 
 %% @doc Finds the first document that matches a selector and returns the document.
 %%
@@ -257,21 +271,23 @@ save(Record) ->
 %%  
 %% @spec init(ConnectionParameters::[{WriteMode, ReadMode, Connection, Database}]) -> {ok, State::tuple()}
 %% @end
-init([{WriteMode, ReadMode, Connection, Database}]) ->
-    {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database}}.
+init([{WriteMode, ReadMode, Connection, Database, CursorTimeout}]) ->
+    {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database,
+				cursor_timeout = CursorTimeout}}.
 
 %% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
 %%      Action of the do/5 function in this process. The process is stopped after the Action completes.
 %%
 %% @spec handle_call(Message::tuple(), From::pid(), State::tuple()) -> {stop, normal, Reply::any(), State::tuple()}
 %% @end
-handle_call({do, WriteMode, ReadMode, Connection, Database, Action}, _From, State) ->
-    Reply = mongo:do(WriteMode, ReadMode, Connection, Database,
+handle_call({do, Action}, _From, State) ->
+    Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
 					 fun() ->
 							 put(write_mode, State#state.write_mode),
 							 put(read_mode, State#state.read_mode),
 							 put(connection, State#state.connection),
 							 put(database, State#state.database),
+							 put(cursor_timeout, State#state.cursor_timeout),
 							 Action()
 					 end),
     {stop, normal, Reply, State}.
