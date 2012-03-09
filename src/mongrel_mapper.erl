@@ -165,15 +165,19 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 	InitialDocument = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
 	unmap_record(DocumentList, MapReferenceFun, InitialDocument).
 
-map_selector(Selector) ->
-	case is_mapped(Selector) of
+%% @doc Maps a selector specifying fields to match to a document.
+%%
+%% @spec map_selector(record()) -> bson:document()
+%% @end
+map_selector(SelectorRecord) ->
+	case is_mapped(SelectorRecord) of
 		true ->
-			RecordName = get_type(Selector),
+			RecordName = get_type(SelectorRecord),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
-			SelectorList = [{FieldId, get_field(Selector, FieldId)} || FieldId <- FieldIds],
+			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
 			list_to_tuple(map_spm(SelectorList, false, []));
 		false ->
-			Selector
+			SelectorRecord
 	end.
 			
 map_projection(Projection) ->
