@@ -145,7 +145,7 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	ReadMode = get(read_mode),
 	Connection = get(connection),
 	Database = get(database),
-	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
+	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, infinity).
 
 %% @doc Finds the first document that matches a selector and returns the document.
 %%

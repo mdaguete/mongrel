@@ -50,7 +50,8 @@ get_all() ->
 	mongrel:do(safe, master, Connection, mongrel_books, 
 			   fun() ->
 					   Cursor = mongrel:find(#book{}),
-					   mongrel_cursor:rest(Cursor)
+					   %mongrel_cursor:rest(Cursor)
+					   Cursor
 			   end).
 
 replace() ->
