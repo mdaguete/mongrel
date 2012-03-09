@@ -165,7 +165,9 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 	InitialDocument = list_to_tuple([RecordName] ++ lists:map(fun(_) -> undefined end, FieldIds)),
 	unmap_record(DocumentList, MapReferenceFun, InitialDocument).
 
-%% @doc Maps a selector specifying fields to match to a document.
+%% @doc Maps a selector specifying fields to match to a document. Nested records are "flattened" using the
+%%      dot notation, e.g. 
+%%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
 %%
 %% @spec map_selector(record()) -> bson:document()
 %% @end
@@ -180,8 +182,14 @@ map_selector(SelectorRecord) ->
 			SelectorRecord
 	end.
 			
-map_projection(Projection) ->
-	map_selector(Projection).
+%% @doc Maps a projection specifying fields to select in a document. Nested records are "flattened" using the
+%%      dot notation, e.g. 
+%%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
+%%
+%% @spec map_projection(record()) -> bson:document()
+%% @end
+map_projection(ProjectionRecord) ->
+	map_selector(ProjectionRecord).
 
 map_modifier({ModifierKey, ModifierValue}) when is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
