@@ -60,26 +60,20 @@ start_link(EtsTableId) ->
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [EtsTableId], []).
 
 %% @doc Specfies the field identifiers associated with a record name.
-%%
-%% @spec add_mapping({atom(), FieldIds::[atom()]}) -> true    
-%% @end
-add_mapping({RecordName, FieldIds}) when is_atom(RecordName) ->
+-spec(add_mapping({atom(), FieldIds::list(atom())}) -> ok).
+add_mapping({RecordName, FieldIds} = _RecordDescriptor) when is_atom(RecordName) ->
 	[true = is_atom(FieldId) || FieldId <- FieldIds],
 	server_call(add_mapping, {RecordName, FieldIds}).
 
 %% @doc Gets the field identifiers associated with a record name.
-%%
-%% @spec get_mapping(atom()) -> [atom()]
-%% @end
+-spec(get_mapping(atom()) -> list(atom())).
 get_mapping(RecordName) when is_atom(RecordName) ->
 	[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 	FieldIds.
 
 %% @doc Returns whether a record is mapped. The argument can be either an atom (a possible record name)
 %%      or a tuple (a possible record).
-%%
-%% @spec is_mapped(RecordOrRecordName::atom()|tuple()) -> bool()
-%% @end
+-spec(is_mapped(RecordOrRecordName::atom()|record()) -> boolean()).
 is_mapped(RecordName) when is_atom(RecordName) ->
 	case server_call(get_mapping, RecordName) of
 		[] ->
@@ -100,9 +94,7 @@ is_mapped(_) ->
 
 %% @doc Returns whether a record has an '_id' field. The argument can be either an atom (a possible record name)
 %%      or a tuple (a possible record).
-%%
-%% @spec has_id(RecordOrRecordName::atom()|tuple()) -> bool()
-%% @end
+-spec(has_id(RecordOrRecordName::atom()|record()) -> boolean()).
 has_id(RecordName) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	CheckHasId = fun(FieldId, Result) ->
@@ -114,9 +106,7 @@ has_id(Record) when is_tuple(Record) andalso size(Record) > 1 ->
 	has_id(RecordName) andalso length(FieldValues) =:= length(get_mapping(RecordName)). 
 
 %% @doc Gets the value of a field from a record.
-%%
-%% @spec get_field(record(), atom()) -> any()
-%% @end
+-spec(get_field(record(), atom()) -> any()).
 get_field(Record, Field) ->
 	[RecordName|FieldValues] = tuple_to_list(Record),
 	FieldIds = get_mapping(RecordName),
@@ -125,9 +115,7 @@ get_field(Record, Field) ->
 %% @doc Sets the value of a field in a record. If the value is a reference to a document,
 %%      a callback function is invoked to map the document to a record. An updated record
 %%      is returned.
-%%
-%% @spec set_field(record(), atom(), any(), func()) -> record()
-%% @end
+-spec(set_field(record(), atom(), FieldValue::any(), fun()) -> record()).
 set_field(Record, FieldId, {?TYPE_REF, Collection, ?ID_REF, Id}, MapReferenceFun) ->
 	set_field(Record, FieldId, MapReferenceFun(Collection, Id), MapReferenceFun);
 set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
@@ -138,18 +126,15 @@ set_field(Record, FieldId, FieldValue, _MapReferenceFun) ->
 
 %% @doc A convenience function that extracts the first element of a tuple. If the
 %%      tuple is a record, the first element contains the record name.
-%%
-%% @spec get_type(record()) -> atom()
-%% @end
+-spec(get_type(record()) -> atom()).
 get_type(Record) ->
 	true = is_mapped(Record),
 	[RecordName|_] = tuple_to_list(Record),
 	RecordName.
 
 %% @doc Maps a record to a document. If the record contains child records, they are also mapped.
-%%
-%% @spec map(record()) -> {{atom(), bson:document()}, [{atom(), bson:document()}]}
-%% @end
+%%      A mapped document is a 2-tuple consisting of the collection name and the document contents.
+-spec(map(record()) -> {{atom(), bson:document()}, list({atom(), bson:document()})}).
 map(Record) ->
 	{Document, ChildDocs} = map_record(Record, []),
 	{{get_type(Record), Document}, ChildDocs}.
