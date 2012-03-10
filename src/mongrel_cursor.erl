@@ -37,7 +37,11 @@
 		 terminate/2, 
 		 code_change/3]).
 
+%% Records
 -record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout}).
+
+%% Types
+-type(cursor() :: pid()).
 
 %% External functions
 
@@ -45,11 +49,7 @@
 %%      configured to timeout after a specified length of inactivity. If the cursor has to return
 %%      a document containing nested documents, the connection parameters are used to read the
 %%      nested documents.
-%%
-%% @spec cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),
-%%              mongo:connection()|mongo:rs_connection(), mongo:db(),
-%%              mongo:collection(), integer()) -> pid()
-%% @end
+-spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection(), integer()) -> cursor()).
 cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, TimeoutInMilliseconds) ->
 	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
 												Database, Collection, TimeoutInMilliseconds], []),
