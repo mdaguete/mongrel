@@ -141,9 +141,7 @@ map(Record) ->
 
 %% @doc Unmaps a document to a record. If the document references nested documents, a callback function
 %%      is called to unmap the nested documents.
-%%
-%% @spec unmap(atom(), bson:document(), fun()) -> record()
-%% @end
+-spec(unmap(atom(), bson:document(), fun()) -> record()).
 unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 	FieldIds = get_mapping(RecordName),
 	DocumentList = tuple_to_list(Document),
@@ -153,9 +151,7 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 %% @doc Maps a selector specifying fields to match to a document. Nested records are "flattened" using the
 %%      dot notation, e.g. 
 %%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
-%%
-%% @spec map_selector(record()) -> bson:document()
-%% @end
+-spec(map_selector(record()) -> bson:document()).
 map_selector(SelectorRecord) ->
 	case is_mapped(SelectorRecord) of
 		true ->
@@ -170,16 +166,13 @@ map_selector(SelectorRecord) ->
 %% @doc Maps a projection specifying fields to select in a document. Nested records are "flattened" using the
 %%      dot notation, e.g. 
 %%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
-%%
-%% @spec map_projection(record()) -> bson:document()
-%% @end
+-spec(map_projection(record()) -> bson:document()).
 map_projection(ProjectionRecord) ->
 	map_selector(ProjectionRecord).
 
-%% @doc Maps a modifier specifying a field to modify to a BSON document
-%%
-%% @spec map_modifier({atom(), record()}) -> bson:document()
-%% @end
+%% @doc Maps a modifier specifying a field to modify to a BSON document. A modifier is an atom
+%%      like '$set', '$inc', etc.
+-spec(map_modifier(Modifier::{atom(), record()}) -> bson:document()).
 map_modifier({ModifierKey, ModifierValue}) when is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
@@ -205,15 +198,13 @@ map_modifier(Modifier) when is_tuple(Modifier) ->
 
 %% @doc Initializes the server with the ETS table used to persist the
 %%      mappings needed for mapping records to documents.
-%% @spec init(EtsTableId::list(integer())) -> {ok, tuple()}
-%% @end
+-spec(init(EtsTableId::list(integer())) -> {ok, #state{}}).
 init([EtsTableId]) ->
 	{ok, #state{ets_table_id = EtsTableId}}.
 
 %% @doc Responds synchronously to server calls. This function is invoked when a mapping is
-%%      added.
-%% @spec handle_call(Message::tuple(), From::pid(), State::record()) -> {reply, ok, NewState::record()}
-%% @end
+%%      added or a mapping needs to be retrieved.
+-spec(handle_call(Message::tuple(), From::pid(), State::#state{}) -> {reply, Reply::any(), NewState::record()}).
 handle_call({add_mapping, {Key, Value}}, _From, State) ->
 	true = ets:insert(State#state.ets_table_id, {Key, Value}),
 	{reply, ok, State};
@@ -221,27 +212,23 @@ handle_call({get_mapping, Key}, _From, State) ->
 	Reply = ets:lookup(State#state.ets_table_id, Key),
 	{reply, Reply, State}.
 
-%% @doc Responds asynchronously to messages. This function should never be invoked.
-%% @spec handle_cast(any(), record()) -> {no_reply, State}
-%% @end
+%% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
+-spec(handle_cast(any(), State::#state{}) -> {no_reply, State::#state{}}).
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
 %% @doc Responds to non-OTP messages. This function should never be invoked.
-%% @spec handle_info(any(), record()) -> {no_reply, State}
-%% @end
+-spec(handle_info(any(), State::#state{}) -> {no_reply, State::#state{}}).
 handle_info(_Info, State) ->
 	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
-%% @spec terminate(any(), record()) -> ok
-%% @end
+-spec(terminate(any(), #state{}) -> ok).
 terminate(_Reason, _State) ->
 	ok.
 
 %% @doc Responds to code changes.
-%% @spec code_change(any(), record(), any()) -> {ok, State}
-%% @end
+-spec(code_change(any(), State::#state{}, any()) -> {ok, State::#state{}}).
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
