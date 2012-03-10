@@ -6,6 +6,8 @@
 @doc
 == Introduction ==
 
-Mongrel is an application for converting Erlang records to MongoDB documents. Documents are
-represented as the tuples required by the MongoDB driver.  
+Mongrel Mapper is an OTP application for converting between Erlang records and MongoDB documents. The application presents
+a similar API to the MongoDB driver but the create, read, update and delete operations take record arguments rather
+than MongoDB tuples. The application takes care of determining an appropriate collection in which to store a record
+and, if necessary, updates or query other collections if the record references nested records.
 
