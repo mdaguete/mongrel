@@ -63,12 +63,27 @@ cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeo
 next(Cursor) ->
 	gen_server:call(Cursor, next, infinity).
 
+%% @doc Returns a list of records referenced by a cursor.
+%%
+%% @spec rest(cursor()) -> list(record())
+%% @end
 rest(Cursor) ->
 	gen_server:call(Cursor, rest, infinity).
 
+%% @doc Returns the mongo:cursor() used by a mongrel:cursor(). Using the mongo:cursor() can
+%%      be significantly faster than the mongrel:cursor() since it returns documents
+%%      from a single collection rather than constructed records which involves eagerly
+%%      loading record fields which may require several trips to the database.
+%%
+%% @spec get_mongo_cursor(cursor()) -> mongo:cursor()
+%% @end
 get_mongo_cursor(Cursor) ->
 	gen_server:call(Cursor, get_mongo_cursor, infinity).
 
+%% @doc Closes the cursor. This involves terminating the cursor gen_server process.
+%%
+%% @spec close(cursor()) -> ok
+%% @end
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
 
@@ -76,12 +91,17 @@ close(Cursor) ->
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
 %%
-%% @spec init(list()) -> {ok, State::tuple(), Timeout::integer()}
+%% @spec init(list()) -> {ok, State::record(), Timeout::integer()}
 %% @end
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
 	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
 				database = Database, collection=Collection, timeout=Timeout}, Timeout}.
 
+%% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
+%%      to get the rest of the messages, to get the mongo:cursor() and to close the cursor.
+%%
+%% @spec handle_call(atom(), pid(), record()) -> tuple()
+%% @end
 handle_call(next, _From, State) ->
 	case mongo_cursor:next(State#state.mongo_cursor) of
 		{} ->
@@ -100,14 +120,17 @@ handle_call(close, _From, State) ->
 	{stop, normal, ok, State}.
 
 
-%% @doc Responds asynchronously to messages.
-%% @spec handle_cast(any(), tuple()) -> {no_reply, State}
+%% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
+%% @spec handle_cast(any(), record()) -> {no_reply, State}
 %% @end
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
-%% @doc Responds to non-OTP messages.
-%% @spec handle_info(any(), tuple()) -> {no_reply, State}
+%% @doc Responds to non-OTP messages. The only out-of-band message of interest is a timeout.
+%%      A timeout indicates that there has been no activity invoking the cursor for a 
+%%      specified time. The cursor process is terminated on a timeout. All other messages are
+%%      ignored.
+%% @spec handle_info(any(), record()) -> tuple()
 %% @end
 handle_info(timeout, State) ->
 	{stop, normal, State};
@@ -121,8 +144,8 @@ terminate(_Reason, State) ->
 	mongo:close_cursor(State#state.mongo_cursor),
 	ok.
 
-%% @doc Responds to code changes.
-%% @spec code_change(any(), any(), any()) -> {ok, State}
+%% @doc Responds to code changes. Code change events are ignored.
+%% @spec code_change(any(), record(), any()) -> {ok, State}
 %% @end
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
