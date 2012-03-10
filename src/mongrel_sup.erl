@@ -32,8 +32,7 @@
 
 %% @doc Starts the supervisor on the local node and registers the
 %%      process.
-%% @spec start_link(integer()) -> {ok, pid()} | {error, any()}
-%% @end
+-spec(start_link(integer()) -> {ok, pid()} | {error, any()}).
 start_link(EtsTableId) ->
 	supervisor:start_link({local, ?SERVER}, ?MODULE, [EtsTableId]).
 
@@ -41,8 +40,7 @@ start_link(EtsTableId) ->
 %% Supervisor functions
 
 %% @doc Supervisor callback. Starts the mongrel server.
-%% @spec init(list(integer())) -> {ok, {RestartStrategy, Servers::list(module())}}
-%% @end
+-spec(init(list(integer())) -> {ok, {RestartStrategy::tuple(), Servers::list(module())}}).
 init(EtsTableIdList) ->
 	[TableId] = EtsTableIdList,
     Server = {mongrel_mapper, {mongrel_mapper, start_link, [TableId]},
