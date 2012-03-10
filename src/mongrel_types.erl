@@ -26,22 +26,16 @@
 %% External functions
 
 %% @doc Encapsulates a binary value as 3-tuple expected by MongoDB driver.
-%%
-%% @spec binary(binary()) -> {bin, bin, X}
-%% @end
+-spec(binary(X::binary()) -> {bin, bin, X::binary()}).
 binary(X) when is_binary(X) ->
 	{bin, bin, X}.
 
 %% @doc Encapsulates a UUID as 3-tuple expected by MongoDB driver.
-%%
-%% @spec uuid(binary()) -> {bin, uuid, X}
-%% @end
+-spec(uuid(X::binary()) -> {bin, uuid, X::binary()}).
 uuid(X) when is_binary(X) ->
 	{bin, uuid, X}.
 
 %% @doc Encapsulates an MD5 hash as 3-tuple expected by MongoDB driver.
-%%
-%% @spec md5(binary()) -> {bin, md5, X}
-%% @end
+-spec(md5(X::binary()) -> {bin, md5, X::binary()}).
 md5(X) when is_binary(X) ->
 	{bin, md5, X}.
