@@ -28,16 +28,12 @@
 %% @doc Starts the application. This function creates an ETS table that is 
 %%      passed to the mongrel supervisor. The table is used to store the field
 %%      identifiers of records that must be mapped.
-%%
-%% @spec start(any(), any()) -> {ok, pid()} | {error, Reason::any()}
-%% @end
+-spec(start(any(), any()) -> {ok, pid()} | {error, Reason::any()}).
 start(_Type, _StartArgs) ->
 	TableId = ets:new(mongrel_table, [public]),
 	mongrel_sup:start_link(TableId).
 
 %% @doc Stops the application.
-%%
-%% @spec stop(any()) -> ok
-%% @end
+-spec(stop(any()) -> ok).
 stop(_State) ->
 	ok.
