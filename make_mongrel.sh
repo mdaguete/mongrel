@@ -18,6 +18,8 @@ rsync -p -r --exclude=".*" test $BUILD_NAME
 rsync -p -r --exclude=".*" include $BUILD_NAME
 cp make_mongrel.sh $BUILD_NAME
 cp gen_doc.sh $BUILD_NAME
+rm $BUILD_NAME/doc/overview.edoc
+rm $BUILD_NAME/doc/edoc-info
 cp overview.edoc $BUILD_NAME
 if [ -f $BUILD_NAME.zip ]; then
     rm $BUILD_NAME.zip
