@@ -16,7 +16,12 @@ Mongrel is an OTP application and can be started by executing `application:start
 ==Documentation==
 The EDocs are included in the mongrel zip archive. The API is also documented <a href="http://mongrelmapper.appspot.com/api/index.html">online</a>. 
 
-==Quick Demo==
+==A Mongrel Demo==
+===The MongoDB Driver===
+It's not essential to be familiar with the MongoDB driver but it may help. Two useful links are:
+ * The MongoDB <a href="http://api.mongodb.org/erlang/mongodb/">API</a>
+ * A <a href="https://github.com/TonyGen/mongodb-erlang/blob/master/README.md">readme</a> that illustrates the driver's use.
+
 ===Sample application===
 To demonstrate !MongrelMapper, we'll populate a database with books from the Monty Python Bookshop Sketch.
  
@@ -86,8 +91,53 @@ These objects are specified in the records declared near the top of the source f
 If a record has an '`_`id' field, Mongrel assumes that the record must be stored in its own collection. A book review can only be associated with one book, so a book review can reasonably be stored as an attribute of a book in a collection of books, so we do not assign an '`_`id' attribute to a review.
 
 ===Code Overview===
+The code illustrates:
+ * How to register record mappings (using the `mongrel_mapper:add_mapping/1` function and the `?mapping` macro). This is shown in the `add_mappings/0` function.
+ * How to establish a connection to a database use the `mongo:connect/1` function. Note that this is function is exported by the MongoDB driver and is not part of mongrel.
+ * How to invoke CRUD operations in an anonymous function invoked by the `mongrel:do/5` function. The `do/5` function specifies connection parameters (e.g., in this case writes are *safe*). The `mongrel:do/5` function has the same semantics as the `mongo:do/5` function but, you should use the mongrel function rather than the mongo function otherwise cursors will not be handled correctly.
+ * How to do deletes using the `mongrel:delete/1` function. This function is similar to the driver's `mongo:delete/2` function.
+ * How to do creates using the `mongrel:insert_all/1` function. This function is similar to the `mongo:insert_all/2` function. 
+ * How to do reads using the `mongrel:find/1` function. The `find/1` function returns a mongrel_cursor:cursor() type. The `mongo:find/2` function is similar except that it returns a `mongo_cursor:cursor()` type. 
+ * How to retrieve results from a cursor, using the `mongrel_cursor:rest/1` function. The results are returned as a list of records. The driver's corresponding function, `mongo_cursor:rest/1`, returns a list where the elements are of type `bson:document()` rather than records. 
 
 ===Running the Code===
 Make sure that the *mongod* server is running on localhost.
 
+====Adding the Record Mappings====
+To run the `book_database` code, you need to ensure that the `mongodb` and `mongrel` applications are started. Then execute `book_database:add_mappings()` as in the trace below.
+
+<pre>
+1> c(book_database).
+{ok,book_database}
+2> application:start(mongodb).
+ok
+3> application:start(mongrel).
+ok
+4> book_database:add_mappings().
+ok
+5> 
+</pre>
+
+The `add_mappings/0` function invokes the `mongrel_mapper:add_mapping/1` function that stores {key, value} pairs where the key is the record name (e.g. book or author) and the value is a list of field identifiers (e.g. `_`id, title, isbn and author for a book record).
+
+====Populating the Database====
+The `book_database:populate/0` function creates some author, book and review records. Notice in particular, the use of the `?id()` macro that populates the `_id` fields of the book and author records. For example, `Author1 = #author{?id(), last_name = <<"Eliott">>}`. The `?id()` macro is defined as `'_id'=mongodb_app:gen_objectid()` and its purpose is to save time typing a commonly needed snippet of code.
+
+The anonymous function passed as a parameter to the `mongrel:do/5` function deletes all book and author records from the `'mongrel_books'` database before populating it with the list of books passed to the `mongrel:insert_all/1` function.
+
+Executing `book_database:populate()` will produce a result similar to that below where a list of six object identifiers is returned; the six ID's are the identifiers created for the six books.
+
+<pre>
+5> book_database:populate().
+{ok,[{<<79,92,226,190,138,250,150,9,38,0,0,2>>},
+     {<<79,92,226,190,138,250,150,9,38,0,0,3>>},
+     {<<79,92,226,190,138,250,150,9,38,0,0,5>>},
+     {<<79,92,226,190,138,250,150,9,38,0,0,6>>},
+     {<<79,92,226,190,138,250,150,9,38,0,0,8>>},
+     {<<79,92,226,190,138,250,150,9,38,0,0,9>>}]}
+6> 
+</pre>
+
+====Reading the Database====
+The `book_example:get_all/0` function retrieves all the books from the 'mongrel_books' database. First, though, it's instructive to use the `mongo` shell to see what was written by the previous code execution.
 
