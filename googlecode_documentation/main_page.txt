@@ -1,0 +1,93 @@
+=Mongrel Mapper=
+
+==Overview==
+The <a href="http://www.mongodb.org/display/DOCS/Erlang+Language+Center">Erlang MongoDB driver</a> encapsulates a MongoDB document as a tuple of key-value pairs. The use of tuples can make for verbose and difficult to maintain code. A more compact and readable way to represent documents is as Erlang records since Erlang provides syntactic sugar for manipulating records more safely and concisely than by using tuples directly.
+
+Mongrel is a library/OTP application that can map Erlang records to MongoDB documents. It aspires to be the Erlang equivalent of the MongoDB Object/Document mappers found in other languages, e.g. !MongoEngine for Python or Morphia for Java.
+
+==Installation==
+<a href="http://code.google.com/p/mongrel/downloads/list">Download</a> the *mongrel-x.y.z.zip* archive. Unzip it to a location accessible from the Erlang environment, e.g. a directory referenced in the $ERL_LIBS environment variable.
+
+You will need to have installed the official MongoDB driver from <a href="https://github.com/TonyGen/mongodb-erlang">!GitHub</a>.
+
+==Running Mongrel==
+Mongrel is an OTP application and can be started by executing `application:start(mongrel)`. Since Mongrel relies on the MongoDB driver, you will need to start the MongoDB driver application first (by running `application:start(mongodb)`).
+
+==Documentation==
+The EDocs are included in the mongrel zip archive. The API is also documented <a href="http://mongrelmapper.appspot.com/api/index.html">online</a>. 
+
+==Quick Demo==
+===Sample application===
+To demonstrate !MongrelMapper, we'll populate a database with books from the Monty Python Bookshop Sketch.
+ 
+<wiki:video url="http://www.youtube.com/watch?v=eCM2nEBE0RY"/>
+
+The `book_database` module (below and included in the archive) exposes two functions to populate the database and to read all books from the database.
+
+<code language="Erlang">
+-module(book_database).
+-export([add_mappings/0, populate/0, get_all/0]).
+-include_lib("mongrel/include/mongrel_macros.hrl").
+
+% Our "domain objects" are books, authors and reviews
+-record(book, {'_id', title, isbn, author, reviews}).
+-record(author, {'_id', first_name, last_name}).
+-record(review, {star_rating, comment}).
+
+add_mappings() ->
+	% For mongrel to work, we need to specify how to map books, authors and reviews.
+	mongrel_mapper:add_mapping(?mapping(book)),
+	mongrel_mapper:add_mapping(?mapping(author)),
+	mongrel_mapper:add_mapping(?mapping(review)).
+	
+populate() ->
+	% Create some books, authors and reviews.
+	Author1 = #author{?id(), last_name = <<"Eliott">>},
+	Book1 = #book{?id(), title = <<"Thirty Days in the Samarkind Desert with the Duchess of Kent">>, author = Author1},
+	Review2 = #review{star_rating = 5, comment = <<"By an Irish gentleman whose name eludes me">>},
+	Book2 = #book{?id(),  title = <<"A Hundred and One Ways to start a Fight">>, reviews = [Review2]},
+	Author3 = #author{?id(), first_name = <<"Edmund">>, last_name = <<"Wells">>},
+	Book3 = #book{?id(), title = <<"David Copperfield">>, author = Author3},
+	Book4 = #book{?id(), title = <<"Grate Expectations">>, author = Author3},
+	Author5 = #author{?id(), first_name = <<"Charles">>, last_name = <<"Dikkens">>},
+	Book5 = #book{?id(), title = <<"Rarnaby Budge">>, author = Author5},
+	Review6a = #review{comment = <<"Warning: Not the expurgated version.">>},
+	Review6b = #review{star_rating = 2, comment = <<"Might be interesting to bird-watchers.">>},
+	Book6 = #book{?id(), title = <<"Olsen's Standard Book of British Birds">>, reviews = [Review6a, Review6b]},
+
+	{ok, Connection} = mongo:connect(localhost),
+	mongrel:do(safe, master, Connection, mongrel_books, 
+			   fun() ->
+					   mongrel:delete(#author{}),
+					   mongrel:delete(#book{}),
+					   mongrel:insert_all([Book1, Book2, Book3, Book4, Book5, Book6])
+			   end).
+
+get_all() ->
+	{ok, Connection} = mongo:connect(localhost),
+	mongrel:do(safe, master, Connection, mongrel_books, 
+			   fun() ->
+					   Cursor = mongrel:find(#book{}),
+					   mongrel_cursor:rest(Cursor)
+			   end).
+</code>
+
+
+===Domain Objects===
+The objects in our domain are:
+ * Books
+ * Authors
+ * Reviews
+
+These objects are specified in the records declared near the top of the source file. The most important feature to note of the records is
+ * Book and author records have an '`_`id' field
+ * Review records do not ave an '`_`id' field.
+
+If a record has an '`_`id' field, Mongrel assumes that the record must be stored in its own collection. A book review can only be associated with one book, so a book review can reasonably be stored as an attribute of a book in a collection of books, so we do not assign an '`_`id' attribute to a review.
+
+===Code Overview===
+
+===Running the Code===
+Make sure that the *mongod* server is running on localhost.
+
+
