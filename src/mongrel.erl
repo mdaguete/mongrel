@@ -237,10 +237,10 @@ init([{WriteMode, ReadMode, Connection, Database, CursorTimeout}] = _ConnectionP
     {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database,
 				cursor_timeout = CursorTimeout}}.
 
-%% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
-%%      Action of the do/5 function in this process. The process is stopped after the Action completes.
+%% @doc Responds synchronously to server calls.  The do functions invoke this handler and execute the
+%%      Action of the function in this process. The process is stopped after the Action completes.
 -spec(handle_call({do, action()}, pid(), #state{}) -> {stop, normal, any(), #state{}}).
-handle_call({do, Action}, _From, State) ->
+handle_call({do, Action}=_Request, _From, State) ->
     Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
 					 fun() ->
 							 put(write_mode, State#state.write_mode),

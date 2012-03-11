@@ -1,5 +1,5 @@
 #! /bin/bash
-VERSION=0.0.8
+VERSION=0.1.0
 BUILD_NAME=mongrel-$VERSION
 set -x
 mkdir $BUILD_NAME
@@ -16,8 +16,11 @@ cp overview.edoc $BUILD_NAME/doc
 rsync -p -r --exclude=".*" src $BUILD_NAME
 rsync -p -r --exclude=".*" test $BUILD_NAME
 rsync -p -r --exclude=".*" include $BUILD_NAME
+rsync -p -r --exclude=".*" src_examples $BUILD_NAME
 cp make_mongrel.sh $BUILD_NAME
 cp gen_doc.sh $BUILD_NAME
+rm $BUILD_NAME/doc/overview.edoc
+rm $BUILD_NAME/doc/edoc-info
 cp overview.edoc $BUILD_NAME
 if [ -f $BUILD_NAME.zip ]; then
     rm $BUILD_NAME.zip

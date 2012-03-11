@@ -1,8 +1,8 @@
-#Sun Feb 26 09:05:36 SAST 2012
+#Sun Mar 11 08:50:52 SAST 2012
 backend_version=R14B
 eclipse.preferences.version=1
 external_includes=
 external_modules=
 include_dirs=include
 output_dir=ebin
-source_dirs=test_examples;test;src
+source_dirs=src;test;src_examples;test_examples
