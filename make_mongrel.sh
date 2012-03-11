@@ -16,6 +16,7 @@ cp overview.edoc $BUILD_NAME/doc
 rsync -p -r --exclude=".*" src $BUILD_NAME
 rsync -p -r --exclude=".*" test $BUILD_NAME
 rsync -p -r --exclude=".*" include $BUILD_NAME
+rsync -p -r --exclude=".*" src_examples $BUILD_NAME
 cp make_mongrel.sh $BUILD_NAME
 cp gen_doc.sh $BUILD_NAME
 rm $BUILD_NAME/doc/overview.edoc
