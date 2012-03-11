@@ -1,5 +1,5 @@
 -module(book_database).
--export([populate/0, get_all/0]).
+-export([add_mappings/0, populate/0, get_all/0]).
 -include_lib("mongrel/include/mongrel_macros.hrl").
 
 % Our "domain objects" are books, authors and reviews
@@ -7,11 +7,13 @@
 -record(author, {'_id', first_name, last_name}).
 -record(review, {star_rating, comment}).
 
-populate() ->
+add_mappings() ->
 	% For mongrel to work, we need to specify how to map books, authors and reviews.
 	mongrel_mapper:add_mapping(?mapping(book)),
 	mongrel_mapper:add_mapping(?mapping(author)),
-	mongrel_mapper:add_mapping(?mapping(review)),
+	mongrel_mapper:add_mapping(?mapping(review)).
+	
+populate() ->
 	% Create some books, authors and reviews.
 	Author1 = #author{?id(), last_name = <<"Eliott">>},
 	Book1 = #book{?id(), title = <<"Thirty Days in the Samarkind Desert with the Duchess of Kent">>, author = Author1},
