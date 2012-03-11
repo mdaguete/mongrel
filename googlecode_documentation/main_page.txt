@@ -138,6 +138,162 @@ Executing `book_database:populate()` will produce a result similar to that below
 6> 
 </pre>
 
-====Reading the Database====
-The `book_example:get_all/0` function retrieves all the books from the 'mongrel_books' database. First, though, it's instructive to use the `mongo` shell to see what was written by the previous code execution.
+====Reading the Database from the Mongo Shell====
+The `book_example:get_all/0` function retrieves all the books from the 'mongrel_books' database. First, though, it's instructive to use the `mongo` shell to see what was written by the previous code execution. Switching to the `'mongrel_books'` database shows that author and book collections were added.
+
+<pre>
+> use mongrel_books
+switched to db mongrel_books
+> show collections
+author
+book
+system.indexes
+> 
+</pre>
+
+Executing `db.book.find()` in the mongo shell produces output as below. There are a couple of points to note:
+ * The `_`id attributes of the books are as returned by the execution of `book_database:populate()` execution from the Erlang shell
+ * The author field of a book is populated with nested documents containing '#type' and '#id' fields (since author records have an '`_`id' field).
+ * Review fields of a book are populated with the reviews (since review records do not have an '`_`id' field) but with the additional '#type' field.
+
+<pre>
+{ "_id" : ObjectId("4f5ce2be8afa960926000002"), "title" : "Thirty Days in the Samarkind Desert with the Duchess of Kent", "author" : { "#type" : "author", "#id" : ObjectId("4f5ce2be8afa960926000001") } }
+{ "_id" : ObjectId("4f5ce2be8afa960926000003"), "title" : "A Hundred and One Ways to start a Fight", "reviews" : [
+	{
+		"#type" : "review",
+		"star_rating" : 5,
+		"comment" : "By an Irish gentleman whose name eludes me"
+	}
+] }
+{ "_id" : ObjectId("4f5ce2be8afa960926000005"), "title" : "David Copperfield", "author" : { "#type" : "author", "#id" : ObjectId("4f5ce2be8afa960926000004") } }
+{ "_id" : ObjectId("4f5ce2be8afa960926000006"), "title" : "Grate Expectations", "author" : { "#type" : "author", "#id" : ObjectId("4f5ce2be8afa960926000004") } }
+{ "_id" : ObjectId("4f5ce2be8afa960926000008"), "title" : "Rarnaby Budge", "author" : { "#type" : "author", "#id" : ObjectId("4f5ce2be8afa960926000007") } }
+{ "_id" : ObjectId("4f5ce2be8afa960926000009"), "title" : "Olsen's Standard Book of British Birds", "reviews" : [
+	{
+		"#type" : "review",
+		"comment" : "Warning: Not the expurgated version."
+	},
+	{
+		"#type" : "review",
+		"star_rating" : 2,
+		"comment" : "Might be interesting to bird-watchers."
+	}
+] }
+</pre>
+
+A similar query, `db.author.find()`, returns all authors
+
+<pre>
+> db.author.find()
+{ "_id" : ObjectId("4f5ce2be8afa960926000001"), "last_name" : "Eliott" }
+{ "_id" : ObjectId("4f5ce2be8afa960926000004"), "first_name" : "Edmund", "last_name" : "Wells" }
+{ "_id" : ObjectId("4f5ce2be8afa960926000007"), "first_name" : "Charles", "last_name" : "Dikkens" }
+> 
+</pre>
+
+====Reading the Database from Erlang====
+Executing `book_database:get_all()` retrieves all the books by getting a cursor to a result set by executing `mongrel:find(#book{})`. Since no fields of the book record are set in the argument to the `mongrel:find/`` function, all books match our query and the cursor contains the complete result set. We invoke the `mongrel_cursor:rest/1` function to get our result set as a list of books.
+
+The trace below shows the result of executing the query.
+<pre>
+6> book_database:get_all().
+{ok,[{book,{<<79,92,226,190,138,250,150,9,38,0,0,2>>},
+           <<"Thirty Days in the Samarkind Desert with the Duchess of Kent">>,
+           undefined,
+           {author,{<<79,92,226,190,138,250,150,9,38,0,0,1>>},
+                   undefined,<<"Eliott">>},
+           undefined},
+     {book,{<<79,92,226,190,138,250,150,9,38,0,0,3>>},
+           <<"A Hundred and One Ways to start a Fight">>,undefined,
+           undefined,
+           [{review,5,
+                    <<"By an Irish gentleman whose name eludes me">>}]},
+     {book,{<<79,92,226,190,138,250,150,9,38,0,0,5>>},
+           <<"David Copperfield">>,undefined,
+           {author,{<<79,92,226,190,138,250,150,9,38,0,0,4>>},
+                   <<"Edmund">>,<<"Wells">>},
+           undefined},
+     {book,{<<79,92,226,190,138,250,150,9,38,0,0,6>>},
+           <<"Grate Expectations">>,undefined,
+           {author,{<<79,92,226,190,138,250,150,9,38,0,0,4>>},
+                   <<"Edmund">>,<<"Wells">>},
+           undefined},
+     {book,{<<79,92,226,190,138,250,150,9,38,0,0,8>>},
+           <<"Rarnaby Budge">>,undefined,
+           {author,{<<79,92,226,190,138,250,150,9,38,0,0,7>>},
+                   <<"Charles">>,<<"Dikkens">>},
+           undefined},
+     {book,{<<79,92,226,190,138,250,150,9,38,0,0,9>>},
+           <<"Olsen's Standard Book of British Birds">>,undefined,
+           undefined,
+           [{review,undefined,
+                    <<"Warning: Not the expurgated version.">>},
+            {review,2,<<"Might be interesting to bird-watchers.">>}]}]}
+7> 
+</pre>
+
+Notice how in the above query the author fields are populated with an author's details; we don't simply get the reference to an identifier in the authors collection.
+
+If we import the record definitions from our code by means the `rr/1` shell command, we can get the query result in an even more digestible form.
+
+<pre>
+7> rr(book_database).
+[author,book,review]
+8> book_database:get_all().
+{ok,[#book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,2>>},
+         title = 
+             <<"Thirty Days in the Samarkind Desert with the Duchess of Kent">>, 
+         isbn = undefined,
+         author = 
+             #author{
+                 '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,1>>},
+                 first_name = undefined,last_name = <<"Eliott">>},
+         reviews = undefined},
+     #book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,3>>},
+         title = <<"A Hundred and One Ways to start a Fight">>,
+         isbn = undefined,author = undefined,
+         reviews = 
+             [#review{
+                  star_rating = 5,
+                  comment = 
+                      <<"By an Irish gentleman whose name eludes me">>}]},
+     #book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,5>>},
+         title = <<"David Copperfield">>,isbn = undefined,
+         author = 
+             #author{
+                 '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,4>>},
+                 first_name = <<"Edmund">>,last_name = <<"Wells">>},
+         reviews = undefined},
+     #book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,6>>},
+         title = <<"Grate Expectations">>,isbn = undefined,
+         author = 
+             #author{
+                 '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,4>>},
+                 first_name = <<"Edmund">>,last_name = <<"Wells">>},
+         reviews = undefined},
+     #book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,8>>},
+         title = <<"Rarnaby Budge">>,isbn = undefined,
+         author = 
+             #author{
+                 '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,7>>},
+                 first_name = <<"Charles">>,last_name = <<"Dikkens">>},
+         reviews = undefined},
+     #book{
+         '_id' = {<<79,92,226,190,138,250,150,9,38,0,0,9>>},
+         title = <<"Olsen's Standard Book of British Birds">>,
+         isbn = undefined,author = undefined,
+         reviews = 
+             [#review{
+                  star_rating = undefined,
+                  comment = <<"Warning: Not the expurgated version.">>},
+              #review{
+                  star_rating = 2,
+                  comment = <<"Might be interesting to bird-watchers.">>}]}]}
+9> 
+</pre>
 
