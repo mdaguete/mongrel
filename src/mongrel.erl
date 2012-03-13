@@ -88,18 +88,18 @@ delete_one(SelectorRecord) ->
 	mongo:delete_one(Collection, Selector).
 
 %% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
-%%      An 'action' is anonymous function that takes no arguments. The fun will usually invoke functions
+%%      An 'action' is a function that takes no arguments. The fun will usually invoke functions
 %%      to do inserts, finds, modifies, deletes, etc.
 -spec(do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(),mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}).
 do(WriteMode, ReadMode, Connection, Database, Action) ->
-	do(WriteMode, ReadMode, Connection, Database, infinity, Action).
+	do(WriteMode, ReadMode, Connection, Database, Action, infinity).
 
 %% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
-%%      An 'action' is anonymous function that takes no arguments. The fun will usually invoke functions
+%%      An 'action' is a function that takes no arguments. The fun will usually invoke functions
 %%      to do inserts, finds, modifies, deletes, etc. A timeout for cursors can be specified if
 %%      cursors are created in the action.
--spec(do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(),mongo:db(), integer(), mongo:action()) -> {ok, any()}|{failure, any()}).
-do(WriteMode, ReadMode, Connection, Database, CursorTimeout, Action) ->
+-spec(do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(),mongo:db(), mongo:action(), integer()) -> {ok, any()}|{failure, any()}).
+do(WriteMode, ReadMode, Connection, Database, Action, CursorTimeout) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
