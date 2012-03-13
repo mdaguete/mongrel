@@ -21,7 +21,9 @@
 %% API
 -export([binary/1,
 		 uuid/1,
-		 md5/1]).
+		 md5/1,
+		 regex/1,
+		 regex/2]).
 
 %% External functions
 
@@ -39,3 +41,13 @@ uuid(X) when is_binary(X) ->
 -spec(md5(X::binary()) -> {bin, md5, X::binary()}).
 md5(X) when is_binary(X) ->
 	{bin, md5, X}.
+
+%% @doc Encapsulates a regex with no options as 3-tuple expected by MongoDB driver.
+-spec(regex(X::binary()) -> {regex, X::binary(), binary()}).
+regex(X) when is_binary(X) ->
+	{regex, X, <<>>}.
+
+%% @doc Encapsulates a regex with options as 3-tuple expected by MongoDB driver.
+-spec(regex(X::binary(), Y::binary()) -> {regex, X::binary(), Y::binary()}).
+regex(X, Y) when is_binary(X) andalso is_binary(Y) ->
+	{regex, X, Y}.

@@ -16,6 +16,10 @@
 
 -define(md5(X), mongrel_types:md5(X)).
 
+-define(regex(X), mongrel_types:regex(X)).
+
+-define(regex(X, Y), mongrel_types:regex(X, Y)).
+
 -define(mapping(Record), {Record, record_info(fields, Record)}).
 
 -define(id(), '_id'=mongodb_app:gen_objectid()).
