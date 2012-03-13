@@ -38,4 +38,11 @@ to_md5_test() ->
 
 mapping_test() ->
 	{foo, [bar, baz]} = ?mapping(foo).
-	
+
+to_regex_test() ->
+	{regex,<<"^\\d{5}$">>,<<>>} = mongrel_types:regex(<<"^\\d{5}$">>),
+	{regex,<<"^\\d{5}$">>,<<>>} = ?regex(<<"^\\d{5}$">>).
+
+to_regex_with_options_test() ->
+	{regex,<<"^\\d{5}$">>,<<"i">>} = mongrel_types:regex(<<"^\\d{5}$">>, <<"i">>),
+	{regex,<<"^\\d{5}$">>,<<"i">>} = ?regex(<<"^\\d{5}$">>, <<"i">>).
