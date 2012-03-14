@@ -27,7 +27,8 @@
 		 cursor/7,
 		 next/1,
 		 rest/1,
-		 get_mongo_cursor/1]).
+		 get_mongo_cursor/1,
+		 set_timeout/2]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -87,6 +88,12 @@ get_mongo_cursor(Cursor) ->
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
 
+%% @doc Sets a timeout for the cursor. If no functions are invoked on the cursor within the specified
+%%      timeframe, the cursor is closed.
+-spec(set_timeout(cursor(), integer()) -> ok).
+set_timeout(Cursor, Timeout) ->
+	gen_server:call(Cursor, {timeout, Timeout}, infinity).
+
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
@@ -117,7 +124,9 @@ handle_call(rest, _From, State) ->
 handle_call(get_mongo_cursor, _From, State) ->
 	{reply, State#state.mongo_cursor, State, State#state.timeout};
 handle_call(close, _From, State) ->
-	{stop, normal, ok, State}.
+	{stop, normal, ok, State};
+handle_call({timeout, Timeout}, _From, State) ->
+	{reply, ok, State#state{timeout = Timeout}, Timeout}.
 
 
 %% @doc Responds asynchronously to messages. Asynchronous messages are ignored.

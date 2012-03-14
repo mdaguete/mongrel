@@ -29,7 +29,6 @@
 		 delete/1,
 		 delete_one/1,
 		 do/5,
-		 do/6,
 		 find/1,
 		 find/2,
 		 find/3,
@@ -92,18 +91,10 @@ delete_one(SelectorRecord) ->
 %%      to do inserts, finds, modifies, deletes, etc.
 -spec(do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(),mongo:db(), mongo:action()) -> {ok, any()}|{failure, any()}).
 do(WriteMode, ReadMode, Connection, Database, Action) ->
-	do(WriteMode, ReadMode, Connection, Database, Action, infinity).
-
-%% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
-%%      An 'action' is a function that takes no arguments. The fun will usually invoke functions
-%%      to do inserts, finds, modifies, deletes, etc. A timeout for cursors can be specified if
-%%      cursors are created in the action.
--spec(do(mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(),mongo:db(), mongo:action(), integer()) -> {ok, any()}|{failure, any()}).
-do(WriteMode, ReadMode, Connection, Database, Action, CursorTimeout) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
-	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database, CursorTimeout}], []),
+	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database, infinity}], []),
 	gen_server:call(Pid, {do, Action}).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
