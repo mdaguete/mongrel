@@ -225,3 +225,22 @@ map_modifier_deep_nested_record_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
 			  {'$set', {'x.bar.y', 7}} = mongrel_mapper:map_modifier({'$set', #coords{x = #foo{bar=#baz{y=7}}}})
      end}.
+
+map_selector_with_list_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			 {x, [1,2,3], y, 7} = mongrel_mapper:map_selector(#coords{x = [1,2,3], y=7})
+     end}.
+
+map_selector_with_list_with_record_1_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			 {x, [1,2, {'#type', baz, y, 1}]} = mongrel_mapper:map_selector(#coords{x = [1,2, #baz{y=1}]})
+     end}.

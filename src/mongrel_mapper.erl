@@ -325,6 +325,9 @@ map_spm([], _IsModifier, Result) ->
 	Result;
 map_spm([{_FieldId, undefined}|Tail], IsModifier, Result) ->
 	map_spm(Tail, IsModifier, Result);
+map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) when is_list(FieldValue) ->
+	false = IsModifier,
+	map_spm(Tail, IsModifier, Result ++ [FieldId, map_spm_list_values(FieldValue, [])]);
 map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) ->
 	case is_mapped(FieldValue) of
 		false ->
@@ -366,4 +369,14 @@ concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true,  IdIsSet, Result) 
 		_ ->
 			true = IdIsSet,
 			concat_field_ids(FieldId1, Tail, true, IdIsSet, Result)
+	end.
+
+map_spm_list_values([], Result) ->
+	Result;
+map_spm_list_values([Value|Tail], Result) ->
+	case is_mapped(Value) of
+		false ->
+			map_spm_list_values(Tail, Result ++ [Value]);
+		true ->
+			map_spm_list_values(Tail, Result ++ [map_selector(Value)])	
 	end.
