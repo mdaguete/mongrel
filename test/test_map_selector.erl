@@ -235,7 +235,7 @@ map_selector_with_list_test_() ->
 			 {x, [1,2,3], y, 7} = mongrel_mapper:map_selector(#coords{x = [1,2,3], y=7})
      end}.
 
-map_selector_with_list_with_record_1_test_() ->
+map_selector_with_list_with_record_test_() ->
 	{setup,
      fun setup/0,
      fun cleanup/1,
@@ -244,3 +244,24 @@ map_selector_with_list_with_record_1_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
 			 {x, [1,2, {'#type', baz, y, 1}]} = mongrel_mapper:map_selector(#coords{x = [1,2, #baz{y=1}]})
      end}.
+
+map_selector_with_list_with_record_with_id_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(bar)),
+			 {x, [1,2, {'#type', bar, '#id', 7}, 4]} = mongrel_mapper:map_selector(#coords{x = [1,2, #bar{'_id'=7, msg=1}, 4]})
+     end}.
+
+map_selector_with_nested_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+			  mongrel_mapper:add_mapping(?mapping(coords)),
+			  mongrel_mapper:add_mapping(?mapping(baz)),
+			 {x, [1, {'#type', baz, y, {'$gt', 7, '$lt', 9}}]} = mongrel_mapper:map_selector(#coords{x = [1,#baz{y = {'$gt', 7, '$lt', 9}}]})
+     end}.
+	
