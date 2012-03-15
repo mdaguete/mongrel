@@ -378,5 +378,6 @@ map_spm_list_values([Value|Tail], Result) ->
 		false ->
 			map_spm_list_values(Tail, Result ++ [Value]);
 		true ->
-			map_spm_list_values(Tail, Result ++ [map_selector(Value)])	
+			{MappedValue, _ChildDocs} = map_value(Value, []),
+			map_spm_list_values(Tail, Result ++ [MappedValue])	
 	end.
