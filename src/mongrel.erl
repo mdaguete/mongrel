@@ -135,7 +135,7 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, CursorTimeout).
 
 %% @doc Finds the first document that matches a selector and returns the document as a record.
--spec(find_one(record()) -> {record()}).
+-spec(find_one(record()) -> record()|{}).
 find_one(SelectorRecord) ->
 	find_one(SelectorRecord, []).
 
@@ -144,7 +144,7 @@ find_one(SelectorRecord) ->
 %%      that all fields in the document are populated.  The projection can be 
 %%      passed as a mapped record or as a Mongo tuple consisting of alternating 
 %%      keys and values.
--spec(find_one(record(), record()|tuple()) -> {record()}).
+-spec(find_one(record(), record()|tuple()) -> record()|{}).
 find_one(SelectorRecord, ProjectorRecord) ->
 	find_one(SelectorRecord, ProjectorRecord, 0).
 
@@ -161,7 +161,7 @@ find_one(SelectorRecord, ProjectorRecord, Skip) ->
 						   {Reference} = mongo:find_one(Coll, {'_id', Id}),
 						   Reference
 				   end,
-	{mongrel_mapper:unmap(Collection, Res, CallbackFunc)}.
+	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
 
 %% @doc Inserts a record into a collection with the same name as the record type. If the 
 %%      record contains nested records with '_id' fields, the nested documents are upserted
