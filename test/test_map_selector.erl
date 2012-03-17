@@ -109,7 +109,7 @@ record_with_id_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(bar)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
 			  Sel = #coords{x=0, y=#bar{'_id'=#foo{bar=3}}},
-			  {x, 0, 'y.#type', bar, 'y.#id.#type', foo, 'y.#id.bar', 3} = mongrel_mapper:map_selector(Sel)
+			  {x, 0, 'y.#id.#type', foo, 'y.#id.bar', 3} = mongrel_mapper:map_selector(Sel)
      end}.
 
 selector_with_id_test_() ->
@@ -139,7 +139,7 @@ map_selector_nested_record_with_id_non_id_set_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
 			  mongrel_mapper:add_mapping(?mapping(bar)),
-			  {'x.#type', bar, 'x.#id', 30} = mongrel_mapper:map_selector(#coords{x = #bar{'_id' = 30, msg = 90}})
+			  {'x.#id', 30} = mongrel_mapper:map_selector(#coords{x = #bar{'_id' = 30, msg = 90}})
      end}.
 
 map_selector_nested_record_with_id_not_set_and_non_id_set_test_() ->
