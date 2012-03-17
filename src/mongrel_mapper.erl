@@ -158,7 +158,7 @@ map_selector(SelectorRecord) ->
 			RecordName = get_type(SelectorRecord),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(map_spm(SelectorList, false, []));
+			list_to_tuple(map_selector(SelectorList, []));
 		false ->
 			SelectorRecord
 	end.
@@ -173,25 +173,13 @@ map_projection(ProjectionRecord) ->
 %% @doc Maps a modifier specifying a field to modify to a BSON document. A modifier is an atom
 %%      like '$set', '$inc', etc.
 -spec(map_modifier(Modifier::{atom(), record()}) -> bson:document()).
-map_modifier({ModifierKey, ModifierValue}) when is_tuple(ModifierValue) ->
+map_modifier({ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
 			{ModifierKey, ModifierValue};
 		true ->
-			RecordName = get_type(ModifierValue),
-			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
-			ModifierList = [{FieldId, get_field(ModifierValue, FieldId)} || FieldId <- FieldIds],
-			{ModifierKey, list_to_tuple(map_spm(ModifierList, true, []))}
-	end;
-map_modifier(Modifier) when is_tuple(Modifier) ->
-	case is_mapped(Modifier) of
-		false ->
-			Modifier;
-		true ->
-			RecordName = get_type(Modifier),
-			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
-			ModifierList = [{FieldId, get_field(Modifier, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(map_spm(ModifierList, true, []))
+			{{_Collection, Document}, ChildDocs} = map(ModifierValue),
+			{ModifierKey, Document}
 	end.
 
 %% Server functions
@@ -319,19 +307,16 @@ unmap_list([], _MapReferenceFun, Result) ->
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
 
-% This generic function can map selectors, projections and modifiers to a BSON document.
-% spm = selector-projection-modifier.
-map_spm([], _IsModifier, Result) ->
+map_selector([], Result) ->
 	Result;
-map_spm([{_FieldId, undefined}|Tail], IsModifier, Result) ->
-	map_spm(Tail, IsModifier, Result);
-map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) when is_list(FieldValue) ->
-	false = IsModifier,
-	map_spm(Tail, IsModifier, Result ++ [FieldId, map_spm_list_values(FieldValue, [])]);
-map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) ->
+map_selector([{_FieldId, undefined}|Tail], Result) ->
+	map_selector(Tail, Result);
+map_selector([{FieldId, FieldValue}|Tail], Result) when is_list(FieldValue) ->
+	map_selector(Tail, Result ++ [FieldId, map_selector_list_values(FieldValue, [])]);
+map_selector([{FieldId, FieldValue}|Tail], Result) ->
 	case is_mapped(FieldValue) of
 		false ->
-			map_spm(Tail, IsModifier, Result ++ [FieldId, FieldValue]);
+			map_selector(Tail, Result ++ [FieldId, FieldValue]);
 		true ->
 			RecordType = get_type(FieldValue),
 			HasId = has_id(RecordType),
@@ -341,15 +326,9 @@ map_spm([{FieldId, FieldValue}|Tail], IsModifier, Result) ->
 						  false ->
 							  false
 					  end,
-			case IsModifier of
-				false ->
-					MappedValueList = tuple_to_list(map_selector(FieldValue)),
-					MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, HasId, IdIsSet, []);
-				true ->
-					MappedValueList = tuple_to_list(map_modifier(FieldValue)),
-					MappedIdValueList = concat_field_ids(FieldId, MappedValueList, HasId, IdIsSet, [])
-			end,
-			map_spm(Tail, IsModifier, Result ++ MappedIdValueList)
+			MappedValueList = tuple_to_list(map_selector(FieldValue)),
+			MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, HasId, IdIsSet, []),
+			map_selector(Tail, Result ++ MappedIdValueList)
 	end.
 
 concat_field_ids(_FieldId, [], _HasId, _IdIsSet, Result) ->
@@ -374,13 +353,13 @@ concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true, false, Result) ->
 			concat_field_ids(FieldId1, Tail, true, false, Result ++ [FieldId, FieldValue])
 	end.
 
-map_spm_list_values([], Result) ->
+map_selector_list_values([], Result) ->
 	Result;
-map_spm_list_values([Value|Tail], Result) ->
+map_selector_list_values([Value|Tail], Result) ->
 	case is_mapped(Value) of
 		false ->
-			map_spm_list_values(Tail, Result ++ [Value]);
+			map_selector_list_values(Tail, Result ++ [Value]);
 		true ->
 			{MappedValue, _ChildDocs} = map_value(Value, []),
-			map_spm_list_values(Tail, Result ++ [MappedValue])	
+			map_selector_list_values(Tail, Result ++ [MappedValue])	
 	end.
