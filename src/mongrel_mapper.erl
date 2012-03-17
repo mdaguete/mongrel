@@ -176,10 +176,10 @@ map_projection(ProjectionRecord) ->
 map_modifier({ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
-			{ModifierKey, ModifierValue};
+			{ModifierKey, ModifierValue, []};
 		true ->
-			{{_Collection, Document}, ChildDocs} = map(ModifierValue),
-			{ModifierKey, Document}
+			{{_Collection, Document}, ChildDocList} = map(ModifierValue),
+			{ModifierKey, Document, ChildDocList}
 	end.
 
 %% Server functions
