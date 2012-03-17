@@ -7,7 +7,10 @@
 == Introduction ==
 
 Mongrel Mapper is an OTP application for converting between Erlang records and MongoDB documents. The application presents
-a similar API to the <a href="http://api.mongodb.org/erlang/mongodb/">MongoDB driver</a> but the create, read, update and delete operations take record arguments rather
-than MongoDB tuples. The application takes care of determining an appropriate collection in which to store a record
+a similar API to the <a href="http://api.mongodb.org/erlang/mongodb/">MongoDB driver</a> but the create, read, update and delete operations t
+ake record arguments rather
+than MongoDB tuples. The application determines in which collection to store a record
 and, if necessary, updates or queries other collections if the record references nested records.
 
+Mongrel Mapper makes handling associations between documents simpler than using the Mongo API directly. The use of records instead
+of tuples increases type-safety.
