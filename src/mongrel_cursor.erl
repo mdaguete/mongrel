@@ -58,16 +58,12 @@ cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeo
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
 %%      are available.
-%%
-%% @spec next(cursor()) -> record() | {}
-%% @end
+-spec(next(cursor()) -> record() | {}).
 next(Cursor) ->
 	gen_server:call(Cursor, next, infinity).
 
 %% @doc Returns a list of records referenced by a cursor.
-%%
-%% @spec rest(cursor()) -> list(record())
-%% @end
+-spec(rest(cursor()) -> list(record())).
 rest(Cursor) ->
 	gen_server:call(Cursor, rest, infinity).
 
@@ -75,16 +71,12 @@ rest(Cursor) ->
 %%      be significantly faster than the mongrel:cursor() since it returns documents
 %%      from a single collection rather than constructed records which involves eagerly
 %%      loading record fields which may require several trips to the database.
-%%
-%% @spec get_mongo_cursor(cursor()) -> mongo:cursor()
-%% @end
+-spec(get_mongo_cursor(cursor()) -> mongo:cursor()).
 get_mongo_cursor(Cursor) ->
 	gen_server:call(Cursor, get_mongo_cursor, infinity).
 
-%% @doc Closes the cursor. This involves terminating the cursor gen_server process.
-%%
-%% @spec close(cursor()) -> ok
-%% @end
+%% @doc Closes the cursor. This stops the cursor gen_server process.
+-spec(close(cursor()) -> ok).
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
 
@@ -97,18 +89,14 @@ set_timeout(Cursor, Timeout) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection.
-%%
-%% @spec init(list()) -> {ok, State::record(), Timeout::integer()}
-%% @end
+-spec(init(list()) -> {ok, State::record(), Timeout::integer()}).
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
 	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
 				database = Database, collection=Collection, timeout=Timeout}, Timeout}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
 %%      to get the rest of the messages, to get the mongo:cursor() and to close the cursor.
-%%
-%% @spec handle_call(atom(), pid(), record()) -> tuple()
-%% @end
+-spec(handle_call(Message::any(), pid(), State::record()) -> {stop, normal, Reply::any(), State::record() | {reply, Reply::any(), State::record(), Timeout::integer()}}).
 handle_call(next, _From, State) ->
 	case mongo_cursor:next(State#state.mongo_cursor) of
 		{} ->
@@ -130,8 +118,7 @@ handle_call({timeout, Timeout}, _From, State) ->
 
 
 %% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
-%% @spec handle_cast(any(), record()) -> {no_reply, State}
-%% @end
+-spec(handle_cast(any(), State::record()) -> {noreply, State::record()}).
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
@@ -139,28 +126,27 @@ handle_cast(_Message, State) ->
 %%      A timeout indicates that there has been no activity invoking the cursor for a 
 %%      specified time. The cursor process is terminated on a timeout. All other messages are
 %%      ignored.
-%% @spec handle_info(any(), record()) -> tuple()
-%% @end
+-spec(handle_info(Message::any(), State::record()) -> {stop, normal, State::record()}|{noreply, State::record()}).
 handle_info(timeout, State) ->
 	{stop, normal, State};
 handle_info(_Info, State) ->
 	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
-%% @spec terminate(any(), record()) -> ok
-%% @end
+-spec(terminate(any(), record()) -> ok).
 terminate(_Reason, State) ->
 	mongo:close_cursor(State#state.mongo_cursor),
 	ok.
 
 %% @doc Responds to code changes. Code change events are ignored.
-%% @spec code_change(any(), record(), any()) -> {ok, State}
-%% @end
+-spec(code_change(any(), State::record(), any()) -> {ok, State::record()}).
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
 
 
 %%% Internal functions
+
+% Reads documents from a cursor and returns them as a list of records.
 rest(State, Docs) ->
 	MongoCursor = State#state.mongo_cursor,
 	case mongo_cursor:next(MongoCursor) of
@@ -173,6 +159,8 @@ rest(State, Docs) ->
 			rest(State, Docs ++ [Record])
 	end.
 
+% Creates a function that uses connection settings to read nested documents
+% referenced in the cursor.
 construct_callback_function(State) ->
 	fun(Coll, Id) ->
 			ReadMode = State#state.read_mode,
