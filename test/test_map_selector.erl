@@ -243,4 +243,15 @@ map_selector_with_nested_tuple_test_() ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
 			 {x, [1, {'#type', baz, y, {'$gt', 7, '$lt', 9}}]} = mongrel_mapper:map_selector(#coords{x = [1,#baz{y = {'$gt', 7, '$lt', 9}}]})
      end}.
+
+
+map_projector_without_id_set_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(bar)), 
+		 Bar = #bar{msg = 1},
+	     {msg, 1} = mongrel_mapper:map_projection(Bar)
+     end}.
 	

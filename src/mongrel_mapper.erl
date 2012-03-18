@@ -137,6 +137,13 @@ get_type(Record) ->
 -spec(map(record()) -> {{atom(), bson:document()}, list({atom(), bson:document()})}).
 map(Record) ->
 	{Document, ChildDocs} = map_record(Record, []),
+	case has_id(Record) of
+		true ->
+			assert_id_is_set(tuple_to_list(Document));
+		false ->
+			ok
+	end,
+	assert_id_is_set_child_docs(ChildDocs),
 	{{get_type(Record), Document}, ChildDocs}.
 
 %% @doc Unmaps a document to a record. If the document references nested documents, a callback function
@@ -165,7 +172,7 @@ map_selector(SelectorRecord) ->
 			
 %% @doc Maps a projection specifying fields to select in a document. Nested records are "flattened" using the
 %%      dot notation, e.g. 
-%%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
+%%      #foo{bar = #baz{x = 1}} is mapped to the document {'bar.x', 1}.
 -spec(map_projection(record()) -> bson:document()).
 map_projection(ProjectionRecord) ->
 	map_selector(ProjectionRecord).
@@ -178,7 +185,8 @@ map_modifier({ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_
 		false ->
 			{ModifierKey, ModifierValue, []};
 		true ->
-			{{_Collection, Document}, ChildDocList} = map(ModifierValue),
+			{Document, ChildDocList} = map_record(ModifierValue, []),
+			assert_id_is_set_child_docs(ChildDocList),
 			{ModifierKey, Document, ChildDocList}
 	end.
 
@@ -363,3 +371,15 @@ map_selector_list_values([Value|Tail], Result) ->
 			{MappedValue, _ChildDocs} = map_value(Value, []),
 			map_selector_list_values(Tail, Result ++ [MappedValue])	
 	end.
+
+assert_id_is_set([]) ->
+	throw("_id field not set in record");
+assert_id_is_set(['_id', undefined|_Tail]) ->
+	throw("_id field not set in record");
+assert_id_is_set(['_id', _|_Tail]) ->
+	ok;
+assert_id_is_set([_FieldId, _FieldValue|Tail]) ->
+	assert_id_is_set(Tail).
+
+assert_id_is_set_child_docs(ChildDocs) ->
+	[assert_id_is_set(tuple_to_list(Child)) || {_RecordName, Child} <- ChildDocs].
