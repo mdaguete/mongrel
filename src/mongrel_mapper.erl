@@ -139,7 +139,7 @@ map(Record) ->
 	{Document, ChildDocs} = map_record(Record, []),
 	case has_id(Record) of
 		true ->
-			assert_id_is_set(tuple_to_list(Document));
+			assert_id_is_set(get_type(Record), tuple_to_list(Document));
 		false ->
 			ok
 	end,
@@ -373,12 +373,12 @@ map_selector_list_values([Value|Tail], Result) ->
 			map_selector_list_values(Tail, Result ++ [MappedValue])	
 	end.
 
-assert_id_is_set([]) ->
-	throw("_id field not set in record");
-assert_id_is_set(['_id', _|_Tail]) ->
+assert_id_is_set(Collection, []) ->
+	throw("_id field not set in record of type " ++ atom_to_list(Collection));
+assert_id_is_set(_Collection, ['_id', _|_Tail]) ->
 	ok;
-assert_id_is_set([_FieldId, _FieldValue|Tail]) ->
-	assert_id_is_set(Tail).
+assert_id_is_set(Collection, [_FieldId, _FieldValue|Tail]) ->
+	assert_id_is_set(Collection, Tail).
 
 assert_id_is_set_child_docs(ChildDocs) ->
-	[assert_id_is_set(tuple_to_list(Child)) || {_RecordName, Child} <- ChildDocs].
+	[assert_id_is_set(RecordName, tuple_to_list(Child)) || {RecordName, Child} <- ChildDocs].
