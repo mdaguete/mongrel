@@ -32,7 +32,7 @@
 		 unmap/3,
 		 map_selector/1,
 		 map_projection/1,
-		 map_modifier/1]).
+		 map_modifier/2]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -179,12 +179,13 @@ map_projection(ProjectionRecord) ->
 
 %% @doc Maps a modifier specifying a field to modify to a BSON document. A modifier is an atom
 %%      like '$set', '$inc', etc.
--spec(map_modifier(Modifier::{atom(), record()}) -> bson:document()).
-map_modifier({ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
+-spec(map_modifier(atom(), Modifier::{Key::atom(), record()}) -> {Key::atom(), bson:document(), list(bson:document())}).
+map_modifier(Collection, {ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
 			{ModifierKey, ModifierValue, []};
 		true ->
+			Collection = get_type(ModifierValue),
 			{Document, ChildDocList} = map_record(ModifierValue, []),
 			assert_id_is_set_child_docs(ChildDocList),
 			{ModifierKey, Document, ChildDocList}

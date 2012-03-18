@@ -35,7 +35,7 @@ modify_flat_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
 		 ok = mongrel_mapper:add_mapping(?mapping(bar)),
-		 {'$inc', {'x', 3, 'y.z', 5}, []} = mongrel_mapper:map_modifier({'$inc', {'x', 3, 'y.z', 5}})
+		 {'$inc', {'x', 3, 'y.z', 5}, []} = mongrel_mapper:map_modifier(foo, {'$inc', {'x', 3, 'y.z', 5}})
      end}.
 
 modify_simple_record_test_() ->
@@ -44,7 +44,7 @@ modify_simple_record_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
-		 {'$set', {'x', 3}, []} = mongrel_mapper:map_modifier({'$set', #foo{x=3}})
+		 {'$set', {'x', 3}, []} = mongrel_mapper:map_modifier(foo, {'$set', #foo{x=3}})
      end}.
 	
 modify_nested_record_test_() ->
@@ -54,7 +54,7 @@ modify_nested_record_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
 	     ok = mongrel_mapper:add_mapping(?mapping(bar)),
-		 {'$set', {'x', {'#type', bar, a, 1}}, []} = mongrel_mapper:map_modifier({'$set', #foo{x=#bar{a=1}}})
+		 {'$set', {'x', {'#type', bar, a, 1}}, []} = mongrel_mapper:map_modifier(foo, {'$set', #foo{x=#bar{a=1}}})
      end}.
 	
 modify_nested_record_with_id_test_() ->
@@ -64,7 +64,7 @@ modify_nested_record_with_id_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(foo)),
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)),
-		 {'$set', {'x', {'#type', baz, '#id', 1}}, [{baz, {'_id', 1, d, 2, f, 3}}]} = mongrel_mapper:map_modifier({'$set', #foo{x=#baz{'_id'=1, d=2, f=3}}})
+		 {'$set', {'x', {'#type', baz, '#id', 1}}, [{baz, {'_id', 1, d, 2, f, 3}}]} = mongrel_mapper:map_modifier(foo, {'$set', #foo{x=#baz{'_id'=1, d=2, f=3}}})
      end}.
 
 modify_record_without_id_set_test_() ->
@@ -73,7 +73,7 @@ modify_record_without_id_set_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)),
-		 {'$set', {d, 2}, []} = mongrel_mapper:map_modifier({'$set', #baz{d=2}})
+		 {'$set', {d, 2}, []} = mongrel_mapper:map_modifier(baz, {'$set', #baz{d=2}})
      end}.
 	
 modify_record_without_id_set_in_nested_doc_test_() ->
@@ -82,6 +82,6 @@ modify_record_without_id_set_in_nested_doc_test_() ->
      fun cleanup/1,
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(baz)),
-		 ?assertThrow(_, mongrel_mapper:map_modifier({'$set', #baz{d=#baz{}}}))
+		 ?assertThrow(_, mongrel_mapper:map_modifier(baz, {'$set', #baz{d=#baz{}}}))
      end}.
 	

@@ -183,7 +183,7 @@ map_modifier_not_record_test_() ->
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  {'$inc', {foo, 3}, []} = mongrel_mapper:map_modifier({'$inc', {foo, 3}})
+			  {'$inc', {foo, 3}, []} = mongrel_mapper:map_modifier(coords, {'$inc', {foo, 3}})
      end}.
 	
 map_modifier_record_test_() ->
@@ -192,7 +192,7 @@ map_modifier_record_test_() ->
      fun cleanup/1,
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(coords)),
-			  {'$inc', {x, 1}, []} = mongrel_mapper:map_modifier({'$inc', #coords{x=1}})
+			  {'$inc', {x, 1}, []} = mongrel_mapper:map_modifier(coords, {'$inc', #coords{x=1}})
      end}.
 	
 map_modifier_record_with_id_test_() ->
@@ -202,7 +202,7 @@ map_modifier_record_with_id_test_() ->
      fun () ->
 			  mongrel_mapper:add_mapping(?mapping(baz)),
 			  mongrel_mapper:add_mapping(?mapping(foo)),
-			  {'$set', {y, 3}, []} = mongrel_mapper:map_modifier({'$set', #baz{y=3}})
+			  {'$set', {y, 3}, []} = mongrel_mapper:map_modifier(baz, {'$set', #baz{y=3}})
      end}.
 	
 map_selector_with_list_test_() ->

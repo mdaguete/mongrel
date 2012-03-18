@@ -188,7 +188,7 @@ insert_all(Records) ->
 modify(SelectorRecord, ModifierRecord) ->
 	Collection = mongrel_mapper:get_type(SelectorRecord),
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
-	{ModifierKey, ModifierValue, ChildDocuments} = mongrel_mapper:map_modifier(ModifierRecord),
+	{ModifierKey, ModifierValue, ChildDocuments} = mongrel_mapper:map_modifier(Collection, ModifierRecord),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
 	mongo:modify(Collection, Selector, {ModifierKey, ModifierValue}).
 
