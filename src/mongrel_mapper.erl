@@ -374,8 +374,6 @@ map_selector_list_values([Value|Tail], Result) ->
 
 assert_id_is_set([]) ->
 	throw("_id field not set in record");
-assert_id_is_set(['_id', undefined|_Tail]) ->
-	throw("_id field not set in record");
 assert_id_is_set(['_id', _|_Tail]) ->
 	ok;
 assert_id_is_set([_FieldId, _FieldValue|Tail]) ->
