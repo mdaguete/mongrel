@@ -188,8 +188,9 @@ insert_all(Records) ->
 modify(SelectorRecord, ModifierRecord) ->
 	Collection = mongrel_mapper:get_type(SelectorRecord),
 	Selector = mongrel_mapper:map_selector(SelectorRecord),
-	Modifier = mongrel_mapper:map_modifier(ModifierRecord),
-	mongo:modify(Collection, Selector, Modifier).
+	{ModifierKey, ModifierValue, ChildDocuments} = mongrel_mapper:map_modifier(ModifierRecord),
+	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
+	mongo:modify(Collection, Selector, {ModifierKey, ModifierValue}).
 
 %% @doc Replaces the first document that matches the selector with a new document.
 -spec(replace(record(), record()) -> ok).
