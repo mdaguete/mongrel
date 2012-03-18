@@ -23,7 +23,8 @@
 		 uuid/1,
 		 md5/1,
 		 regex/1,
-		 regex/2]).
+		 regex/2,
+		 id/0]).
 
 %% External functions
 
@@ -51,3 +52,8 @@ regex(X) when is_binary(X) ->
 -spec(regex(X::binary(), Y::binary()) -> {regex, X::binary(), Y::binary()}).
 regex(X, Y) when is_binary(X) andalso is_binary(Y) ->
 	{regex, X, Y}.
+
+%% @doc Returns a unique object ID. 
+-spec(id() -> bson:objectid()).
+id() ->
+	mongodb_app:gen_objectid().
