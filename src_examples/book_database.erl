@@ -9,6 +9,8 @@
 
 add_mappings() ->
 	% For mongrel to work, we need to specify how to map books, authors and reviews.
+	% If you hate typing, you can use the even shorter macro expansions:
+	% ?add_mapping(book), ?add_mapping(author) and ?add_mapping(review)
 	mongrel_mapper:add_mapping(?mapping(book)),
 	mongrel_mapper:add_mapping(?mapping(author)),
 	mongrel_mapper:add_mapping(?mapping(review)).
