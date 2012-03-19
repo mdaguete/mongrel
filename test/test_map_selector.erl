@@ -261,3 +261,13 @@ map_selector_non_record_test_() ->
      fun () ->
 			 {x, 2, y, 3} = mongrel_mapper:map_selector({x, 2, y, 3})
      end}.
+
+map_query_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
+		 Sel = #coords{x=3, z=5},
+	     {'$query', {x, 3, z, 5}} = mongrel_mapper:map_selector({'$query', Sel})
+     end}.
