@@ -165,7 +165,7 @@ map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 			RecordName = get_type(SelectorRecord),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(get_flattened_map(SelectorList, []));
+			{RecordName, list_to_tuple(get_flattened_map(SelectorList, []))};
 		false ->
 			SelectorRecord
 	end.
