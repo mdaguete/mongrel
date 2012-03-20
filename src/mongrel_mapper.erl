@@ -158,14 +158,14 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 %% @doc Maps a selector specifying fields to match to a document. Nested records are "flattened" using the
 %%      dot notation, e.g. 
 %%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
--spec(map_selector(record()) -> bson:document()).
+-spec(map_selector(record()) -> {Colection::atom, bson:document()}).
 map_selector(SelectorRecord) ->
 	case is_mapped(SelectorRecord) of
 		true ->
 			RecordName = get_type(SelectorRecord),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
-			list_to_tuple(map_selector(SelectorList, []));
+			{get_type(SelectorRecord), list_to_tuple(map_selector(SelectorList, []))};
 		false ->
 			SelectorRecord
 	end.

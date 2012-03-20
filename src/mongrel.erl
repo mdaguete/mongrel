@@ -68,22 +68,19 @@ count(SelectorRecord) ->
 %%      maximum. A limit of 0 means that all matching documents are counted.
 -spec(count(record(), integer()) -> integer()).
 count(SelectorRecord, Limit) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:count(Collection, Selector, Limit).
 	
 %% @doc Deletes all documents that match a selector.
 -spec(delete(record()) -> ok).
 delete(SelectorRecord) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:delete(Collection, Selector).
 
 %% @doc Deletes the first document that matches a selector.
 -spec(delete_one(record()) -> ok).
 delete_one(SelectorRecord) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:delete_one(Collection, Selector).
 
 %% @doc Executes an 'action' using the specified read and write modes to a database using a connection.
@@ -123,8 +120,7 @@ find(SelectorRecord, ProjectorRecord, Skip) ->
 %%      documents.  The cursor retrieves results in the specified batch size.
 -spec(find(record(), record(), integer(), integer()) -> mongrel_cursor:cursor()).
 find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
 	WriteMode = get(write_mode),
@@ -153,8 +149,7 @@ find_one(SelectorRecord, ProjectorRecord) ->
 %%      matching documents.
 -spec(find_one(record(), record()|tuple(), integer()) -> {record()}).
 find_one(SelectorRecord, ProjectorRecord, Skip) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	{Res} = mongo:find_one(Collection, Selector, Projector, Skip),
 	CallbackFunc = fun(Coll, Id) ->
@@ -186,8 +181,7 @@ insert_all(Records) ->
 %%      or as a mongo modifier tuple (e.g. {'$set', {bar, 3}).
 -spec(modify(record(), record()) -> ok).
 modify(SelectorRecord, ModifierRecord) ->
-	Collection = mongrel_mapper:get_type(SelectorRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	{ModifierKey, ModifierValue, ChildDocuments} = mongrel_mapper:map_modifier(Collection, ModifierRecord),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments],
 	mongo:modify(Collection, Selector, {ModifierKey, ModifierValue}).
@@ -196,16 +190,16 @@ modify(SelectorRecord, ModifierRecord) ->
 -spec(replace(record(), record()) -> ok).
 replace(SelectorRecord, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
-	Selector = mongrel_mapper:map_selector(SelectorRecord),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:replace(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
 %% @doc Replaces the first document that matches the selector with a new document. If
 %%      document can be matched, the new document is inserted.
 -spec(repsert(record(), record()) -> ok).
-repsert(RecordSelector, NewRecord) ->
+repsert(SelectorRecord, NewRecord) ->
 	{{Collection, NewDocument}, ChildDocuments} = mongrel_mapper:map(NewRecord),
-	Selector = mongrel_mapper:map_selector(RecordSelector),
+	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	mongo:repsert(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
