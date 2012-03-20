@@ -243,7 +243,7 @@ map_query_tuple_test_() ->
      fun () ->
 	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
 		 Sel = #coords{x=3, z=5},
-	     {'$query', {x, 3, z, 5}} = mongrel_mapper:map_selector({'$query', Sel})
+	     {coords, {'$query', {x, 3, z, 5}}} = mongrel_mapper:map_selector({'$query', Sel})
      end}.
 
 map_nonquery_tuple_test_() ->
@@ -254,4 +254,25 @@ map_nonquery_tuple_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
 		 Sel = #coords{x=3, z=5},
 	     ?assertError(_, mongrel_mapper:map_selector({'$notquery', Sel}))
+     end}.
+
+map_query_with_ordering_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
+		 Sel = #coords{x=3, z=5},
+	     {coords, {'$query', {x, 3, z, 5}, '$orderby', {y, 1}}} = mongrel_mapper:map_selector({'$query', Sel, '$orderby', {y, 1}})
+     end}.
+
+map_query_with_ordering_record_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
+		 Sel = #coords{x=3, z=5},
+		 OrderBy = #coords{y= -1},
+	     {coords, {'$orderby', {y, -1}, '$query', {x, 3, z, 5}}} = mongrel_mapper:map_selector({'$orderby', OrderBy, '$query', Sel})
      end}.

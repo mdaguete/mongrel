@@ -167,7 +167,7 @@ map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
 			{RecordName, list_to_tuple(get_flattened_map(SelectorList, []))};
 		false ->
-			SelectorRecord
+			map_advanced_selector({false, undefined, []}, tuple_to_list(SelectorRecord))
 	end.
 			
 %% @doc Maps a projection specifying fields to select in a document. Nested records are "flattened" using the
@@ -393,3 +393,11 @@ assert_id_is_set(Collection, [_FieldId, _FieldValue|Tail]) ->
 
 assert_id_is_set_child_docs(ChildDocs) ->
 	[assert_id_is_set(RecordName, tuple_to_list(Child)) || {RecordName, Child} <- ChildDocs].
+
+map_advanced_selector({true, RecordName, Result}, []) ->
+	{RecordName, list_to_tuple(Result)};
+map_advanced_selector({false, _RecordName, Result}, ['$query', Query | Tail]) ->
+	RecordName = get_type(Query),
+	map_advanced_selector({true, RecordName, Result ++ ['$query', get_flattened_map(Query)]}, Tail);
+map_advanced_selector({GotType, RecordName, Result}, [Key, Value | Tail]) ->
+	map_advanced_selector({GotType, RecordName, Result ++ [Key, get_flattened_map(Value)]}, Tail).
