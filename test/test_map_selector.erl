@@ -59,15 +59,6 @@ query_non_record_test_() ->
 	     {x, {'$gt', 7}} = mongrel_mapper:map_selector(Sel)
      end}.
 
-query_non_tuple_test_() ->
-	{setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-		 Sel = 3,
-	     3 = mongrel_mapper:map_selector(Sel)
-     end}.
-	
 basic_nested_test_() ->
 	{setup,
      fun setup/0,

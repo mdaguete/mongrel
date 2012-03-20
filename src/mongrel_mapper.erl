@@ -159,13 +159,13 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 %%      dot notation, e.g. 
 %%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
 -spec(map_selector(record()) -> {Colection::atom, bson:document()}).
-map_selector(SelectorRecord) ->
+map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 	case is_mapped(SelectorRecord) of
 		true ->
 			RecordName = get_type(SelectorRecord),
 			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
-			{get_type(SelectorRecord), list_to_tuple(map_selector(SelectorList, []))};
+			list_to_tuple(get_flattened_map(SelectorList, []));
 		false ->
 			SelectorRecord
 	end.
@@ -175,7 +175,7 @@ map_selector(SelectorRecord) ->
 %%      #foo{bar = #baz{x = 1}} is mapped to the document {'bar.x', 1}.
 -spec(map_projection(record()) -> bson:document()).
 map_projection(ProjectionRecord) ->
-	map_selector(ProjectionRecord).
+	get_flattened_map(ProjectionRecord).
 
 %% @doc Maps a modifier specifying a field to modify to a BSON document. A modifier is an atom
 %%      like '$set', '$inc', etc.
@@ -316,16 +316,27 @@ unmap_list([], _MapReferenceFun, Result) ->
 unmap_list([Value|ValueTail], MapReferenceFun, Result) ->
 	unmap_list(ValueTail, MapReferenceFun, Result ++ [unmap_value(Value, MapReferenceFun)]).
 
-map_selector([], Result) ->
+get_flattened_map(Record) ->
+	case is_mapped(Record) of
+		true ->
+			RecordName = get_type(Record),
+			[{RecordName, FieldIds}] = server_call(get_mapping, RecordName),
+			SelectorList = [{FieldId, get_field(Record, FieldId)} || FieldId <- FieldIds],
+			list_to_tuple(get_flattened_map(SelectorList, []));
+		false ->
+			Record
+	end.
+
+get_flattened_map([], Result) ->
 	Result;
-map_selector([{_FieldId, undefined}|Tail], Result) ->
-	map_selector(Tail, Result);
-map_selector([{FieldId, FieldValue}|Tail], Result) when is_list(FieldValue) ->
-	map_selector(Tail, Result ++ [FieldId, map_selector_list_values(FieldValue, [])]);
-map_selector([{FieldId, FieldValue}|Tail], Result) ->
+get_flattened_map([{_FieldId, undefined}|Tail], Result) ->
+	get_flattened_map(Tail, Result);
+get_flattened_map([{FieldId, FieldValue}|Tail], Result) when is_list(FieldValue) ->
+	get_flattened_map(Tail, Result ++ [FieldId, map_list_values(FieldValue, [])]);
+get_flattened_map([{FieldId, FieldValue}|Tail], Result) ->
 	case is_mapped(FieldValue) of
 		false ->
-			map_selector(Tail, Result ++ [FieldId, FieldValue]);
+			get_flattened_map(Tail, Result ++ [FieldId, FieldValue]);
 		true ->
 			RecordType = get_type(FieldValue),
 			HasId = has_id(RecordType),
@@ -335,9 +346,9 @@ map_selector([{FieldId, FieldValue}|Tail], Result) ->
 						  false ->
 							  false
 					  end,
-			MappedValueList = tuple_to_list(map_selector(FieldValue)),
+			MappedValueList = tuple_to_list(get_flattened_map(FieldValue)),
 			MappedIdValueList = concat_field_ids(FieldId, ['#type', RecordType] ++ MappedValueList, HasId, IdIsSet, []),
-			map_selector(Tail, Result ++ MappedIdValueList)
+			get_flattened_map(Tail, Result ++ MappedIdValueList)
 	end.
 
 concat_field_ids(_FieldId, [], _HasId, _IdIsSet, Result) ->
@@ -362,15 +373,15 @@ concat_field_ids(FieldId1, [FieldId2, FieldValue|Tail], true, false, Result) ->
 			concat_field_ids(FieldId1, Tail, true, false, Result ++ [FieldId, FieldValue])
 	end.
 
-map_selector_list_values([], Result) ->
+map_list_values([], Result) ->
 	Result;
-map_selector_list_values([Value|Tail], Result) ->
+map_list_values([Value|Tail], Result) ->
 	case is_mapped(Value) of
 		false ->
-			map_selector_list_values(Tail, Result ++ [Value]);
+			map_list_values(Tail, Result ++ [Value]);
 		true ->
 			{MappedValue, _ChildDocs} = map_value(Value, []),
-			map_selector_list_values(Tail, Result ++ [MappedValue])	
+			map_list_values(Tail, Result ++ [MappedValue])	
 	end.
 
 assert_id_is_set(Collection, []) ->
