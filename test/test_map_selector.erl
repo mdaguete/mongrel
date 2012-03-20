@@ -50,15 +50,6 @@ query_conditional_test_() ->
 	     {coords, {x, 3, y, {'$gt', 7, '$lt', 10}}} = mongrel_mapper:map_selector(Sel)
      end}.
 	
-query_non_record_test_() ->
-	{setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-		 Sel = {x, {'$gt', 7}},
-	     {x, {'$gt', 7}} = mongrel_mapper:map_selector(Sel)
-     end}.
-
 basic_nested_test_() ->
 	{setup,
      fun setup/0,
@@ -245,14 +236,6 @@ map_projector_without_id_set_test_() ->
 	     {msg, 1} = mongrel_mapper:map_projection(Bar)
      end}.
 	
-map_selector_non_record_test_() ->
-	{setup,
-     fun setup/0,
-     fun cleanup/1,
-     fun () ->
-			 {x, 2, y, 3} = mongrel_mapper:map_selector({x, 2, y, 3})
-     end}.
-
 map_query_tuple_test_() ->
 	{setup,
      fun setup/0,
@@ -261,4 +244,14 @@ map_query_tuple_test_() ->
 	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
 		 Sel = #coords{x=3, z=5},
 	     {'$query', {x, 3, z, 5}} = mongrel_mapper:map_selector({'$query', Sel})
+     end}.
+
+map_nonquery_tuple_test_() ->
+	{setup,
+     fun setup/0,
+     fun cleanup/1,
+     fun () ->
+	     ok = mongrel_mapper:add_mapping(?mapping(coords)), 
+		 Sel = #coords{x=3, z=5},
+	     ?assertError(_, mongrel_mapper:map_selector({'$notquery', Sel}))
      end}.
