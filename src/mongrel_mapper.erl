@@ -158,7 +158,7 @@ unmap(RecordName, Document, MapReferenceFun) when is_atom(RecordName) ->
 %% @doc Maps a selector specifying fields to match to a document. Nested records are "flattened" using the
 %%      dot notation, e.g. 
 %%      #foo{bar = #baz{x = 3}} is mapped to the document {'bar.x', 3}.
--spec(map_selector(record()) -> {Colection::atom, bson:document()}).
+-spec(map_selector(record()) -> {Collection::atom, bson:document()}).
 map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 	case is_mapped(SelectorRecord) of
 		true ->
@@ -167,6 +167,7 @@ map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 			SelectorList = [{FieldId, get_field(SelectorRecord, FieldId)} || FieldId <- FieldIds],
 			{RecordName, list_to_tuple(get_flattened_map(SelectorList, []))};
 		false ->
+			%% An 'advanced' selector is a document of the form {'$query': Query, OptionKey: OptionValue}
 			map_advanced_selector({false, undefined, []}, tuple_to_list(SelectorRecord))
 	end.
 			
@@ -327,6 +328,8 @@ get_flattened_map(Record) ->
 			Record
 	end.
 
+% Constructs a document where nested elements are replaced using the 'dot'
+% notation, e.g. {a: {b:1}} is replaced with {'a.b': 1}
 get_flattened_map([], Result) ->
 	Result;
 get_flattened_map([{_FieldId, undefined}|Tail], Result) ->
@@ -394,6 +397,7 @@ assert_id_is_set(Collection, [_FieldId, _FieldValue|Tail]) ->
 assert_id_is_set_child_docs(ChildDocs) ->
 	[assert_id_is_set(RecordName, tuple_to_list(Child)) || {RecordName, Child} <- ChildDocs].
 
+% An 'advanced' query is a document with a '$query' key and possibly other options.
 map_advanced_selector({true, RecordName, Result}, []) ->
 	{RecordName, list_to_tuple(Result)};
 map_advanced_selector({false, _RecordName, Result}, ['$query', Query | Tail]) ->
