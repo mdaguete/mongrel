@@ -178,8 +178,11 @@ map_selector(SelectorRecord) when is_tuple(SelectorRecord) ->
 map_projection(ProjectionRecord) ->
 	get_flattened_map(ProjectionRecord).
 
-%% @doc Maps a modifier specifying a field to modify to a BSON document. A modifier is an atom
-%%      like '$set', '$inc', etc.
+%% @doc Maps a modifier specifying a field to modify in a BSON document. A modifier is an atom
+%%      like '$set', '$inc', etc. The field can be specified as a record or as a MongoDB document.
+%%      Specifying the modifier as a document rather than a record is more concise and is
+%%      intended to be convenient. For consistency though, this convenient hack may be removed in
+%%      later releases of Mongrel.
 -spec(map_modifier(atom(), Modifier::{Key::atom(), record()}) -> {Key::atom(), bson:document(), list(bson:document())}).
 map_modifier(Collection, {ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
