@@ -12,7 +12,7 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel mapping server. This module provides the Record/Document Mapping API.
+%%% @doc Mongrel mapping server. This module provides the record/document mapping API.
 %%% @end
 
 -module(mongrel_mapper).
