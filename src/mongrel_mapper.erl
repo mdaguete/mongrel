@@ -12,7 +12,9 @@
 
 %%% @author CA Meijer
 %%% @copyright 2012 CA Meijer
-%%% @doc Mongrel mapping server. This module provides the record/document mapping API.
+%%% @doc Mongrel mapping server. This module exports functions to map records
+%%%      to documents and to map documents to records. Additional functions
+%%%      map records to selector, projection and modifier documents.
 %%% @end
 
 -module(mongrel_mapper).
@@ -113,7 +115,7 @@ get_field(Record, Field) ->
 	get_field(FieldIds, FieldValues, Field).
 
 %% @doc Sets the value of a field in a record. If the value is a reference to a document,
-%%      a callback function is invoked to map the document to a record. An updated record
+%%      a callback function is invoked to map the referenced document to a record. An updated record
 %%      is returned.
 -spec(set_field(record(), atom(), FieldValue::any(), fun()) -> record()).
 set_field(Record, FieldId, {?TYPE_REF, Collection, ?ID_REF, Id}, MapReferenceFun) ->
@@ -132,9 +134,9 @@ get_type(Record) ->
 	[RecordName|_] = tuple_to_list(Record),
 	RecordName.
 
-%% @doc Maps a record to a document. If the record contains child records, they are also mapped.
+%% @doc Maps a record to a document. If the record contains child (nested) records, they are also mapped.
 %%      A mapped document is a 2-tuple consisting of the collection name and the document contents.
--spec(map(record()) -> {{atom(), bson:document()}, list({atom(), bson:document()})}).
+-spec(map(record()) -> {MappedRecord::{atom(), bson:document()}, NestedRecords::list({atom(), bson:document()})}).
 map(Record) ->
 	{Document, ChildDocs} = map_record(Record, []),
 	case has_id(Record) of
@@ -183,7 +185,7 @@ map_projection(ProjectionRecord) ->
 %%      Specifying the modifier as a document rather than a record is more concise and is
 %%      intended to be convenient. For consistency though, this convenient hack may be removed in
 %%      later releases of Mongrel.
--spec(map_modifier(atom(), Modifier::{Key::atom(), record()}) -> {Key::atom(), bson:document(), list(bson:document())}).
+-spec(map_modifier(atom(), Modifier::{Key::atom(), record()}) -> {Key::atom(), bson:document(), NestedDocuments::list(bson:document())}).
 map_modifier(Collection, {ModifierKey, ModifierValue}) when is_atom(ModifierKey) andalso is_tuple(ModifierValue) ->
 	case is_mapped(ModifierValue) of
 		false ->
@@ -197,7 +199,7 @@ map_modifier(Collection, {ModifierKey, ModifierValue}) when is_atom(ModifierKey)
 
 %% Server functions
 
-%% @doc Initializes the server with the ETS table used to persist the
+%% @doc Initializes the server with the ETS table used to store the
 %%      mappings needed for mapping records to documents.
 -spec(init(EtsTableId::list(integer())) -> {ok, #state{}}).
 init([EtsTableId]) ->
@@ -218,7 +220,7 @@ handle_call({get_mapping, Key}, _From, State) ->
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
-%% @doc Responds to non-OTP messages. This function should never be invoked.
+%% @doc Responds to non-OTP messages. Non-OTP messages are ignored.
 -spec(handle_info(any(), State::#state{}) -> {no_reply, State::#state{}}).
 handle_info(_Info, State) ->
 	{noreply, State}.
