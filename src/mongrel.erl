@@ -14,9 +14,8 @@
 %%% @copyright 2012 CA Meijer
 %%% @doc Mongrel API. This module provides functions for creating, reading, updating and deleting
 %%       documents. The functions exposed are similar to the CRUD functions exposed by the
-%%       mongo API of the MongoDB driver. Typically, the mongo driver functions require both
-%%       collection and document arguments. The mongrel functions usually require one fewer
-%%       argument since the collection and document contents are both encapsulated in a record.
+%%       mongo API of the MongoDB driver. While the mongo functions take collection and document 
+%%       arguments, the mongrel functions expect one or more records as arguments. 
 %%% @end
 
 -module(mongrel).
@@ -100,7 +99,7 @@ find(SelectorRecord) ->
 	find(SelectorRecord, []).
 
 %% @doc Finds all documents that match a selector and returns a cursor
-%%      of a projection result. The projection can be passed as a mapped
+%%      of a projection. The projection can be passed as a mapped
 %%      record or as a Mongo tuple consisting of alternating keys and values.
 %%      An empty list ([]) indicates that the full projection of documents must
 %%      be returned.
@@ -109,15 +108,15 @@ find(SelectorRecord, ProjectorRecord) ->
 	find(SelectorRecord, ProjectorRecord, 0).
 
 %% @doc Finds all documents that match a selector and returns a cursor
-%%      of a projection result that skips a specified number of matching
-%%      documents. 
+%%      of a projection result. A specified number of matching
+%%      documents are skipped. 
 -spec(find(record(), record(), integer()) -> mongrel_cursor:cursor()).
 find(SelectorRecord, ProjectorRecord, Skip) ->
 	find(SelectorRecord, ProjectorRecord, Skip, 0).
 
 %% @doc Finds all documents that match a selector and returns a cursor
-%%      of a projection result that skips a specified number of matching
-%%      documents.  The cursor retrieves results in the specified batch size.
+%%      of a projection result. A specified number of matching
+%%      documents are skipped.  The cursor retrieves results in the specified batch size.
 -spec(find(record(), record(), integer(), integer()) -> mongrel_cursor:cursor()).
 find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
@@ -253,7 +252,7 @@ handle_info(_Info, State) ->
 terminate(_Reason, _State) ->
 	ok.
 
-%% @doc Responds to code changes. Any code changes are ignored (the State remains unchanged).
--spec(code_change(any(), #state{}, any()) -> {ok, #state{}}).
+%% @doc Responds to code changes. Any code changes are ignored (the server's state is unchanged).
+-spec(code_change(any(), State::#state{}, any()) -> {ok, State::#state{}}).
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.
