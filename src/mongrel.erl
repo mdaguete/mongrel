@@ -222,8 +222,8 @@ init([{WriteMode, ReadMode, Connection, Database, CursorTimeout}] = _ConnectionP
     {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database,
 				cursor_timeout = CursorTimeout}}.
 
-%% @doc Responds synchronously to server calls.  The do functions invoke this handler and execute the
-%%      Action of the function in this process. The process is stopped after the Action completes.
+%% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
+%%      action of the do/5 function in this process. The process is stopped after the action completes.
 -spec(handle_call({do, action()}, pid(), #state{}) -> {stop, normal, any(), #state{}}).
 handle_call({do, Action}=_Request, _From, State) ->
     Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
@@ -238,12 +238,12 @@ handle_call({do, Action}=_Request, _From, State) ->
     {stop, normal, Reply, State}.
 
 %% @doc Responds asynchronously to messages. The server ignores any asynchronous messages.
--spec(handle_cast(any(), #state{}) -> {noreply, #state{}}).
+-spec(handle_cast(any(), State::#state{}) -> {noreply, State::#state{}}).
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
 %% @doc Responds to out-of-band messages. The server ignores any such messages.
--spec(handle_info(any(), #state{}) -> {noreply, #state{}}).
+-spec(handle_info(any(), State::#state{}) -> {noreply, State::#state{}}).
 handle_info(_Info, State) ->
 	{noreply, State}.
 
