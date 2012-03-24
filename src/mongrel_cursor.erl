@@ -88,14 +88,15 @@ set_timeout(Cursor, Timeout) ->
 
 %% Server functions
 
-%% @doc Initializes the cursor with a MongoDB cursor and connection.
+%% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
 -spec(init(list()) -> {ok, State::record(), Timeout::integer()}).
 init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
 	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
 				database = Database, collection=Collection, timeout=Timeout}, Timeout}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
-%%      to get the rest of the messages, to get the mongo:cursor() and to close the cursor.
+%%      to get any remaining records, to get the mongo:cursor(), to close the cursor and to set
+%%      the timeout of the cursor.
 -spec(handle_call(Message::any(), pid(), State::record()) -> {stop, normal, Reply::any(), State::record() | {reply, Reply::any(), State::record(), Timeout::integer()}}).
 handle_call(next, _From, State) ->
 	case mongo_cursor:next(State#state.mongo_cursor) of
