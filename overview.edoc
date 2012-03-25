@@ -1,6 +1,6 @@
 @author CA Meijer <hammingweight@gmail.com>
 @copyright 2012 CA Meijer
-@version 1.0.1
+@version 1.0.2
 @title Mongrel Record/Document Mapper
 
 @doc
@@ -13,6 +13,6 @@ update and delete operations take record arguments instead of MongoDB tuples.
 The benefits of using a mapper and records instead of documents are
 <ul>
 <li>More expressive code</li>
-<li>The compiler provides type-checking</li>
+<li>The compiler provides validation that records are correctly populated</li>
 <li>Associations between a document and nested child documents can be handled transparently</li>
 </ul>
