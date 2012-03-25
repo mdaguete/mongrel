@@ -193,7 +193,7 @@ replace(SelectorRecord, NewRecord) ->
 	mongo:replace(Collection, Selector, NewDocument),
 	[mongo:save(ChildCollection, ChildDocument) || {ChildCollection, ChildDocument} <- ChildDocuments].
 	
-%% @doc Replaces the first document that matches the selector with a new document. If
+%% @doc Replaces the first document that matches the selector with a new document. If no
 %%      document can be matched, the new document is inserted.
 -spec(repsert(record(), record()) -> ok).
 repsert(SelectorRecord, NewRecord) ->
@@ -222,8 +222,8 @@ init([{WriteMode, ReadMode, Connection, Database, CursorTimeout}] = _ConnectionP
     {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database,
 				cursor_timeout = CursorTimeout}}.
 
-%% @doc Responds synchronously to server calls.  The do/5 function invokes this handler and executes the
-%%      action of the do/5 function in this process. The process is stopped after the action completes.
+%% @doc Responds synchronously to server calls.  The action of the do/5 function is executed by
+%%      this function. The process is stopped after this call.
 -spec(handle_call({do, action()}, pid(), #state{}) -> {stop, normal, any(), #state{}}).
 handle_call({do, Action}=_Request, _From, State) ->
     Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
