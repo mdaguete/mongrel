@@ -37,7 +37,7 @@ add_mappings() ->
 populate() ->
 	John = #user{?id(), email= <<"jdoe@example.com">>, first_name= <<"John">>, last_name= <<"Doe">>},
 	Post1 = #post{?id(), title= <<"Fun with MongoeEngine">>, author=John, tags=[<<"mongodb">>, <<"mongoengine">>], 
-				  body=#text_post{content= <<"Took a look at mongoengine today, looks pretty cool.">>}},
+				  body=#text_post{content= <<"Took a look at mongoengine, looks pretty cool.">>}},
 	Post2 = #post{?id(), title= <<"MongoEngine Documentation">>, author=John, tags=[<<"mongoengine">>],
 				  body=#link_post{link_url= <<"http://tractiondigital.com/labs/mongoengine/docs">>}},
 	{ok, Conn} = mongo:connect(localhost),
@@ -45,6 +45,6 @@ populate() ->
 			   fun() ->
 					   mongrel:delete(#user{}),
 					   mongrel:delete(#post{}),
-					   mongrel:insert_all([Post1, Post2]),
-					   mongo_connect:close(Conn)
-			   end).
+					   mongrel:insert_all([Post1, Post2])
+			   end),
+	mongo_connect:close(Conn).
