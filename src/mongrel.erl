@@ -91,7 +91,7 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
 	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database, infinity}], []),
-	gen_server:call(Pid, {do, Action}).
+	gen_server:call(Pid, {do, Action}, infinity).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
 -spec(find(record()) -> mongrel_cursor:cursor()).
