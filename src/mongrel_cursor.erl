@@ -120,7 +120,7 @@ handle_cast(_Message, State) ->
 %%      specified time. The cursor process is terminated on a timeout. All other messages are
 %%      ignored.
 -spec(handle_info(Message::any(), State::record()) -> {stop, normal, State::record()}|{noreply, State::record()}).
-handle_info(timeout, State) ->
+handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) when Pid =:= State#state.parent_process ->
 	{stop, normal, State};
 handle_info(_Info, State) ->
 	{noreply, State}.

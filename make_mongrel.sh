@@ -1,5 +1,5 @@
 #! /bin/bash
-VERSION=1.1.0
+VERSION=1.1.1
 BUILD_NAME=mongrel-$VERSION
 set -x
 mkdir $BUILD_NAME
