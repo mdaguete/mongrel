@@ -15,7 +15,9 @@
 %%% @doc Mongrel cursor process. This module provides functions for getting documents from a cursor.
 %%%      Unlike a mongo cursor, this cursor may need to read from the database when the cursor
 %%%      is read since the document that is read may reference nested documents that need to be 
-%%%      fetched.
+%%%      fetched. A second difference from a mongo cursor is that a mongrel cursor terminates when
+%%%      the process that created the cursor terminates. This second difference implies that a mongrel 
+%%%      cursor cannot be used outside of the action of a mongrel:do/5 function.
 %%% @end
 
 -module(mongrel_cursor).
@@ -24,11 +26,10 @@
 
 %% External exports
 -export([close/1,
-		 cursor/7,
+		 cursor/6,
 		 next/1,
 		 rest/1,
-		 get_mongo_cursor/1,
-		 set_timeout/2]).
+		 get_mongo_cursor/1]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -39,21 +40,20 @@
 		 code_change/3]).
 
 %% Records
--record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout}).
+-record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, parent_process}).
 
 %% Types
 -type(cursor() :: pid()).
 
 %% External functions
 
-%% @doc Creates a cursor using a specified connection to a database collection. The cursor is
-%%      configured to timeout after a specified length of inactivity. If the cursor has to return
-%%      a document containing nested documents, the connection parameters are used to read the
-%%      nested documents.
--spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection(), integer()) -> cursor()).
-cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, TimeoutInMilliseconds) ->
+%% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
+%%      to return a document containing nested documents, the connection parameters are used to 
+%%      read the nested documents.
+-spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
+cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
 	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
-												Database, Collection, TimeoutInMilliseconds], []),
+												Database, Collection, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
@@ -80,19 +80,13 @@ get_mongo_cursor(Cursor) ->
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
 
-%% @doc Sets a timeout for the cursor. If no functions are invoked on the cursor within the specified
-%%      timeframe, the cursor is closed.
--spec(set_timeout(cursor(), integer()) -> ok).
-set_timeout(Cursor, Timeout) ->
-	gen_server:call(Cursor, {timeout, Timeout}, infinity).
-
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
--spec(init(list()) -> {ok, State::record(), Timeout::integer()}).
-init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
+init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Pid]) ->
+	monitor(process, Pid),
 	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
-				database = Database, collection=Collection, timeout=Timeout}, Timeout}.
+				database = Database, collection=Collection, parent_process=Pid}, infinity}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
 %%      to get any remaining records, to get the mongo:cursor(), to close the cursor and to set
@@ -105,17 +99,15 @@ handle_call(next, _From, State) ->
 		{Document} ->
 			CallbackFunc = construct_callback_function(State),
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
-			{reply, Reply, State, State#state.timeout}
+			{reply, Reply, State, infinity}
 	end;
 handle_call(rest, _From, State) ->
 	Docs = rest(State, []),
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
-	{reply, State#state.mongo_cursor, State, State#state.timeout};
+	{reply, State#state.mongo_cursor, State, infinity};
 handle_call(close, _From, State) ->
-	{stop, normal, ok, State};
-handle_call({timeout, Timeout}, _From, State) ->
-	{reply, ok, State#state{timeout = Timeout}, Timeout}.
+	{stop, normal, ok, State}.
 
 
 %% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
