@@ -39,7 +39,7 @@
 		 code_change/3]).
 
 %% Records
--record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout}).
+-record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, timeout, parent_process}).
 
 %% Types
 -type(cursor() :: pid()).
@@ -53,7 +53,7 @@
 -spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection(), integer()) -> cursor()).
 cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, TimeoutInMilliseconds) ->
 	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
-												Database, Collection, TimeoutInMilliseconds], []),
+												Database, Collection, TimeoutInMilliseconds, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
@@ -90,9 +90,10 @@ set_timeout(Cursor, Timeout) ->
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
 -spec(init(list()) -> {ok, State::record(), Timeout::integer()}).
-init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout]) ->
+init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Timeout, Pid]) ->
+	monitor(process, Pid),
 	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
-				database = Database, collection=Collection, timeout=Timeout}, Timeout}.
+				database = Database, collection=Collection, timeout=Timeout, parent_process=Pid}, Timeout}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
 %%      to get any remaining records, to get the mongo:cursor(), to close the cursor and to set
@@ -129,6 +130,8 @@ handle_cast(_Message, State) ->
 %%      ignored.
 -spec(handle_info(Message::any(), State::record()) -> {stop, normal, State::record()}|{noreply, State::record()}).
 handle_info(timeout, State) ->
+	{stop, normal, State};
+handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) when Pid =:= State#state.parent_process ->
 	{stop, normal, State};
 handle_info(_Info, State) ->
 	{noreply, State}.
