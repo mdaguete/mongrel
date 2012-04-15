@@ -15,7 +15,9 @@
 %%% @doc Mongrel cursor process. This module provides functions for getting documents from a cursor.
 %%%      Unlike a mongo cursor, this cursor may need to read from the database when the cursor
 %%%      is read since the document that is read may reference nested documents that need to be 
-%%%      fetched.
+%%%      fetched. A second difference from a mongo cursor is that a mongrel cursor terminates when
+%%%      the process that created the cursor terminates. This second difference implies that a mongrel 
+%%%      cursor cannot be used outside of the action of a mongrel:do/5 function.
 %%% @end
 
 -module(mongrel_cursor).
