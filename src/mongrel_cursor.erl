@@ -29,7 +29,7 @@
 -behaviour(gen_server).
 
 %% Includes
--include("mongrel_macros.hrl").
+-include("mongrel.hrl").
 
 %% External exports
 -export([close/1,

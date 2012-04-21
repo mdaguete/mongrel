@@ -23,7 +23,7 @@
 -behaviour(gen_server).
 
 %% Includes
--include("mongrel_macros.hrl").
+-include("mongrel.hrl").
 
 %% API
 -export([count/1,

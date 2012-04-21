@@ -10,22 +10,4 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--define(binary(X), mongrel_types:binary(X)).
-
--define(uuid(X), mongrel_types:uuid(X)).
-
--define(md5(X), mongrel_types:md5(X)).
-
--define(regex(X), mongrel_types:regex(X)).
-
--define(regex(X, Y), mongrel_types:regex(X, Y)).
-
--define(mapping(Record), {Record, record_info(fields, Record)}).
-
--define(add_mapping(Record), mongrel_mapper:add_mapping({Record, record_info(fields, Record)})).
-
--define(id(), '_id'=mongodb_app:gen_objectid()).
-
--define(TYPE_REF, '#type').
-
--define(ID_REF, '#id').
+-record(mongrel_state, {database, connection, write_mode, read_mode}).
