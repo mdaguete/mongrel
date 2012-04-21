@@ -122,11 +122,10 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
-	WriteMode = get(write_mode),
 	ReadMode = get(read_mode),
 	Connection = get(connection),
 	Database = get(database),
-	mongrel_cursor:cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection).
+	mongrel_cursor:cursor(MongoCursor, ReadMode, Connection, Database, Collection).
 
 %% @doc Finds the first document that matches a selector and returns the document as a record.
 -spec(find_one(record()) -> record()|{}).
@@ -226,7 +225,6 @@ init([{WriteMode, ReadMode, Connection, Database}] = _ConnectionParameters) ->
 handle_call({do, Action}=_Request, _From, State) ->
     Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
 					 fun() ->
-							 put(write_mode, State#state.write_mode),
 							 put(read_mode, State#state.read_mode),
 							 put(connection, State#state.connection),
 							 put(database, State#state.database),

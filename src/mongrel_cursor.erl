@@ -26,10 +26,11 @@
 
 %% External exports
 -export([close/1,
-		 cursor/6,
+		 cursor/5,
 		 next/1,
 		 rest/1,
-		 get_mongo_cursor/1]).
+		 get_mongo_cursor/1,
+		 set_timeout/2]).
 
 %% gen_server callbacks
 -export([init/1, 
@@ -40,7 +41,7 @@
 		 code_change/3]).
 
 %% Records
--record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, parent_process}).
+-record(state, {mongo_cursor, read_mode, connection, database, collection, parent_process, timeout=infinity, die_with_parent=true}).
 
 %% Types
 -type(cursor() :: pid()).
@@ -50,10 +51,9 @@
 %% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
 %%      to return a document containing nested documents, the connection parameters are used to 
 %%      read the nested documents.
--spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
-cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
-												Database, Collection, self()], []),
+-spec(cursor(mongo:cursor(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
+cursor(MongoCursor, ReadMode, Connection, Database, Collection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, ReadMode, Connection, Database, Collection, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
@@ -80,13 +80,19 @@ get_mongo_cursor(Cursor) ->
 close(Cursor) ->
 	gen_server:call(Cursor, close, infinity).
 
+%% @doc Sets the cursor timeout. The cursor will die after the specified length of inactivity.
+%%      The cursor remains alive even if the parent process dies.
+-spec(set_timeout(cursor(), integer()|infinity) -> ok).
+set_timeout(Cursor, Timeout) ->
+	gen_server:call(Cursor, {set_timeout, Timeout}, infinity).
+	
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
-init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Pid]) ->
+init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]) ->
 	monitor(process, Pid),
-	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
-				database = Database, collection=Collection, parent_process=Pid}, infinity}.
+	{ok, #state{mongo_cursor=MongoCursor, read_mode=ReadMode, connection=Connection, database = Database, 
+				collection=Collection, parent_process=Pid}, infinity}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
 %%      to get any remaining records, to get the mongo:cursor(), to close the cursor and to set
@@ -99,15 +105,17 @@ handle_call(next, _From, State) ->
 		{Document} ->
 			CallbackFunc = construct_callback_function(State),
 			Reply = mongrel_mapper:unmap(State#state.collection, Document, CallbackFunc),
-			{reply, Reply, State, infinity}
+			{reply, Reply, State, State#state.timeout}
 	end;
 handle_call(rest, _From, State) ->
 	Docs = rest(State, []),
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
-	{reply, State#state.mongo_cursor, State, infinity};
+	{reply, State#state.mongo_cursor, State, State#state.timeout};
 handle_call(close, _From, State) ->
-	{stop, normal, ok, State}.
+	{stop, normal, ok, State};
+handle_call({set_timeout, Timeout}, _From, State) ->
+	{reply, ok, State#state{die_with_parent=false, timeout=Timeout}, Timeout}.
 
 
 %% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
@@ -115,12 +123,12 @@ handle_call(close, _From, State) ->
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
-%% @doc Responds to non-OTP messages. The only out-of-band message of interest is a timeout.
-%%      A timeout indicates that there has been no activity invoking the cursor for a 
-%%      specified time. The cursor process is terminated on a timeout. All other messages are
-%%      ignored.
+%% @doc Responds to non-OTP messages. The messages that are handled are a timeout and the
+%%      the termination of the parent process.
 -spec(handle_info(Message::any(), State::record()) -> {stop, normal, State::record()}|{noreply, State::record()}).
-handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) when Pid =:= State#state.parent_process ->
+handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) when Pid =:= State#state.parent_process andalso State#state.die_with_parent ->
+	{stop, normal, State};
+handle_info(timeout, State) ->
 	{stop, normal, State};
 handle_info(_Info, State) ->
 	{noreply, State}.
@@ -157,10 +165,9 @@ rest(State, Docs) ->
 construct_callback_function(State) ->
 	fun(Coll, Id) ->
 			ReadMode = State#state.read_mode,
-			WriteMode = State#state.write_mode,
 			Connection = State#state.connection,
 			Database = State#state.database,
-			{ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database,
+			{ok, Res} = mongo:do(safe, ReadMode, Connection, Database,
 								 fun() ->
 										 {Reference} = mongo:find_one(Coll, {'_id', Id}),
 										 Reference
