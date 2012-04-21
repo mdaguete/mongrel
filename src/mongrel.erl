@@ -38,6 +38,7 @@
 		 find_one/1,
 		 find_one/2,
 		 find_one/3,
+		 get_connection_parameters/0,
 		 insert/1,
 		 insert_all/1,
 		 modify/2,
@@ -123,8 +124,8 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
-	MongrelState = get(mongrel_state),
-	mongrel_cursor:cursor(MongoCursor, MongrelState, Collection).
+	MongrelConnection = get_connection_parameters(),
+	mongrel_cursor:cursor(MongoCursor, MongrelConnection, Collection).
 
 %% @doc Finds the first document that matches a selector and returns the document as a record.
 -spec(find_one(record()) -> record()|{}).
@@ -153,6 +154,11 @@ find_one(SelectorRecord, ProjectorRecord, Skip) ->
 						   Reference
 				   end,
 	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
+
+%% @doc Gets the parameters used to read from and write to the database.
+-spec(get_connection_parameters() -> #mongrel_connection{}).
+get_connection_parameters() ->
+	get(mongrel_state).
 
 %% @doc Inserts a record into a collection with the same name as the record type. If the 
 %%      record contains nested records with '_id' fields, the nested documents are upserted
