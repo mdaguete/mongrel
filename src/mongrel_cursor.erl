@@ -28,9 +28,12 @@
 
 -behaviour(gen_server).
 
+%% Includes
+-include("mongrel.hrl").
+
 %% External exports
 -export([close/1,
-		 cursor/5,
+		 cursor/3,
 		 next/1,
 		 rest/1,
 		 get_mongo_cursor/1,
@@ -55,9 +58,12 @@
 %% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
 %%      to return a document containing nested documents, the connection parameters are used to 
 %%      read the nested documents.
--spec(cursor(mongo:cursor(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
-cursor(MongoCursor, ReadMode, Connection, Database, Collection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, ReadMode, Connection, Database, Collection, self()], []),
+-spec(cursor(mongo:cursor(), #mongrel_connection{}, mongo:collection()) -> cursor()).
+cursor(MongoCursor, MongrelConnection, Collection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, MongrelConnection#mongrel_connection.read_mode, 
+												MongrelConnection#mongrel_connection.connection, 
+												MongrelConnection#mongrel_connection.database, 
+												Collection, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
@@ -93,7 +99,7 @@ set_timeout(Cursor, Timeout) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
-init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]) ->
+init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]=_ConnectionParameters) ->
 	monitor(process, Pid),
 	{ok, #state{mongo_cursor=MongoCursor, read_mode=ReadMode, connection=Connection, database = Database, 
 				collection=Collection, parent_process=Pid}, infinity}.
