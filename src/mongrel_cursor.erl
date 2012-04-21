@@ -99,7 +99,7 @@ set_timeout(Cursor, Timeout) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
-init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]) ->
+init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]=_ConnectionParameters) ->
 	monitor(process, Pid),
 	{ok, #state{mongo_cursor=MongoCursor, read_mode=ReadMode, connection=Connection, database = Database, 
 				collection=Collection, parent_process=Pid}, infinity}.
