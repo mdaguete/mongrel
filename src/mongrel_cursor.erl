@@ -28,9 +28,12 @@
 
 -behaviour(gen_server).
 
+%% Includes
+-include("mongrel_macros.hrl").
+
 %% External exports
 -export([close/1,
-		 cursor/5,
+		 cursor/3,
 		 next/1,
 		 rest/1,
 		 get_mongo_cursor/1,
@@ -55,9 +58,11 @@
 %% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
 %%      to return a document containing nested documents, the connection parameters are used to 
 %%      read the nested documents.
--spec(cursor(mongo:cursor(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
-cursor(MongoCursor, ReadMode, Connection, Database, Collection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, ReadMode, Connection, Database, Collection, self()], []),
+-spec(cursor(mongo:cursor(), #mongrel_state{}, mongo:collection()) -> cursor()).
+cursor(MongoCursor, MongrelConnection, Collection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, MongrelConnection#mongrel_state.read_mode, 
+												MongrelConnection#mongrel_state.connection, MongrelConnection#mongrel_state.database, 
+												Collection, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents

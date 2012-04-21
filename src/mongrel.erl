@@ -124,8 +124,7 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
 	MongrelState = get(mongrel_state),
-	mongrel_cursor:cursor(MongoCursor, MongrelState#mongrel_state.read_mode,  MongrelState#mongrel_state.connection, 
-						  MongrelState#mongrel_state.database, Collection).
+	mongrel_cursor:cursor(MongoCursor, MongrelState, Collection).
 
 %% @doc Finds the first document that matches a selector and returns the document as a record.
 -spec(find_one(record()) -> record()|{}).
@@ -135,7 +134,7 @@ find_one(SelectorRecord) ->
 %% @doc Finds the first document that matches a selector and returns a
 %%      projection of the document. The empty projection ([]) means
 %%      that all fields in the document are populated.  The projection can be 
-%%      passed as a mapped record or as a Mongo tuple consisting of alternating 
+%%      passed as a mapped record or as a MongoDB tuple consisting of alternating 
 %%      keys and values.
 -spec(find_one(record(), record()|tuple()) -> record()|{}).
 find_one(SelectorRecord, ProjectorRecord) ->
