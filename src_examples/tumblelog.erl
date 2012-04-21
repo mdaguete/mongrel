@@ -36,7 +36,7 @@ add_mappings() ->
 
 populate() ->
 	John = #user{?id(), email= <<"jdoe@example.com">>, first_name= <<"John">>, last_name= <<"Doe">>},
-	Post1 = #post{?id(), title= <<"Fun with MongoeEngine">>, author=John, tags=[<<"mongodb">>, <<"mongoengine">>], 
+	Post1 = #post{?id(), title= <<"Fun with MongoEngine">>, author=John, tags=[<<"mongodb">>, <<"mongoengine">>], 
 				  body=#text_post{content= <<"Took a look at mongoengine, looks pretty cool.">>}},
 	Post2 = #post{?id(), title= <<"MongoEngine Documentation">>, author=John, tags=[<<"mongoengine">>],
 				  body=#link_post{link_url= <<"http://tractiondigital.com/labs/mongoengine/docs">>}},
