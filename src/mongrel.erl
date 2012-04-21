@@ -156,6 +156,8 @@ find_one(SelectorRecord, ProjectorRecord, Skip) ->
 	mongrel_mapper:unmap(Collection, Res, CallbackFunc).
 
 %% @doc Gets the parameters used to read from and write to the database.
+%%      It only makes sense to invoke this function from within the process
+%%      spawned by the do/5 function.
 -spec(get_connection_parameters() -> #mongrel_connection{}).
 get_connection_parameters() ->
 	get(mongrel_state).
