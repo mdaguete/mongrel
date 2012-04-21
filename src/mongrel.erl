@@ -90,7 +90,8 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
-	{ok, Pid} = gen_server:start_link(?MODULE, [{WriteMode, ReadMode, Connection, Database}], []),
+	State = #mongrel_state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database},
+	{ok, Pid} = gen_server:start_link(?MODULE, [State], []),
 	gen_server:call(Pid, {do, Action}, infinity).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
@@ -214,9 +215,9 @@ save(Record) ->
 %% @doc Initializes the server with a write mode, read mode, a connection and database.
 %%      The parameters are stored in the process dictionary so that they can be used
 %%      if a connection is needed by a cursor to access collections.
--spec(init([{mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db()}]) -> {ok, State::#mongrel_state{}}).
-init([{WriteMode, ReadMode, Connection, Database}] = _ConnectionParameters) ->
-    {ok, #mongrel_state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database}}.
+-spec(init([State::#mongrel_state{}]) -> {ok, State::#mongrel_state{}}).
+init([State]) ->
+    {ok, State}.
 
 %% @doc Responds synchronously to server calls.  The action of the do/5 function is executed by
 %%      this function. The process is stopped after this call.
