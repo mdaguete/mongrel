@@ -90,8 +90,8 @@ do(WriteMode, ReadMode, Connection, Database, Action) ->
 	%% Since we need to store state information, we spawn a new process for this
 	%% function so that if the Action also invokes the 'do' function we don't wind up trashing
 	%% the original state.
-	State = #mongrel_state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database},
-	{ok, Pid} = gen_server:start_link(?MODULE, [State], []),
+	ConnectionParameters = #mongrel_connection{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database},
+	{ok, Pid} = gen_server:start_link(?MODULE, [ConnectionParameters], []),
 	gen_server:call(Pid, {do, Action}, infinity).
 
 %% @doc Finds all documents that match a selector and returns a cursor.
@@ -214,16 +214,16 @@ save(Record) ->
 %% @doc Initializes the server with a write mode, read mode, a connection and database.
 %%      The parameters are stored in the process dictionary so that they can be used
 %%      if a connection is needed by a cursor to access collections.
--spec(init([State::#mongrel_state{}]) -> {ok, State::#mongrel_state{}}).
+-spec(init([State::#mongrel_connection{}]) -> {ok, State::#mongrel_connection{}}).
 init([State]) ->
     {ok, State}.
 
 %% @doc Responds synchronously to server calls.  The action of the do/5 function is executed by
 %%      this function. The process is stopped after this call.
--spec(handle_call({do, action()}, pid(), #mongrel_state{}) -> {stop, normal, any(), #mongrel_state{}}).
+-spec(handle_call({do, action()}, pid(), #mongrel_connection{}) -> {stop, normal, any(), #mongrel_connection{}}).
 handle_call({do, Action}=_Request, _From, State) ->
-    Reply = mongo:do(State#mongrel_state.write_mode, State#mongrel_state.read_mode, State#mongrel_state.connection, 
-					 State#mongrel_state.database,
+    Reply = mongo:do(State#mongrel_connection.write_mode, State#mongrel_connection.read_mode, 
+					 State#mongrel_connection.connection, State#mongrel_connection.database,
 					 fun() ->
 							 put(mongrel_state, State),
 							 Action()
@@ -231,21 +231,21 @@ handle_call({do, Action}=_Request, _From, State) ->
     {stop, normal, Reply, State}.
 
 %% @doc Responds asynchronously to messages. The server ignores any asynchronous messages.
--spec(handle_cast(any(), State::#mongrel_state{}) -> {noreply, State::#mongrel_state{}}).
+-spec(handle_cast(any(), State::#mongrel_connection{}) -> {noreply, State::#mongrel_connection{}}).
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
 %% @doc Responds to out-of-band messages. The server ignores any such messages.
--spec(handle_info(any(), State::#mongrel_state{}) -> {noreply, State::#mongrel_state{}}).
+-spec(handle_info(any(), State::#mongrel_connection{}) -> {noreply, State::#mongrel_connection{}}).
 handle_info(_Info, State) ->
 	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
--spec(terminate(any(), #mongrel_state{}) -> ok).
+-spec(terminate(any(), #mongrel_connection{}) -> ok).
 terminate(_Reason, _State) ->
 	ok.
 
 %% @doc Responds to code changes. Any code changes are ignored (the server's state is unchanged).
--spec(code_change(any(), State::#mongrel_state{}, any()) -> {ok, State::#mongrel_state{}}).
+-spec(code_change(any(), State::#mongrel_connection{}, any()) -> {ok, State::#mongrel_connection{}}).
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.

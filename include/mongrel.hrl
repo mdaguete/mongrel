@@ -10,4 +10,4 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
--record(mongrel_state, {database, connection, write_mode, read_mode}).
+-record(mongrel_connection, {database, connection, write_mode, read_mode}).

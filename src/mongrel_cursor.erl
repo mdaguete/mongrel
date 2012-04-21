@@ -58,10 +58,11 @@
 %% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
 %%      to return a document containing nested documents, the connection parameters are used to 
 %%      read the nested documents.
--spec(cursor(mongo:cursor(), #mongrel_state{}, mongo:collection()) -> cursor()).
+-spec(cursor(mongo:cursor(), #mongrel_connection{}, mongo:collection()) -> cursor()).
 cursor(MongoCursor, MongrelConnection, Collection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, MongrelConnection#mongrel_state.read_mode, 
-												MongrelConnection#mongrel_state.connection, MongrelConnection#mongrel_state.database, 
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, MongrelConnection#mongrel_connection.read_mode, 
+												MongrelConnection#mongrel_connection.connection, 
+												MongrelConnection#mongrel_connection.database, 
 												Collection, self()], []),
 	Pid.
 
