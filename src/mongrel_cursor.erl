@@ -26,7 +26,7 @@
 
 %% External exports
 -export([close/1,
-		 cursor/6,
+		 cursor/5,
 		 next/1,
 		 rest/1,
 		 get_mongo_cursor/1]).
@@ -40,7 +40,7 @@
 		 code_change/3]).
 
 %% Records
--record(state, {mongo_cursor, write_mode, read_mode, connection, database, collection, parent_process}).
+-record(state, {mongo_cursor, read_mode, connection, database, collection, parent_process}).
 
 %% Types
 -type(cursor() :: pid()).
@@ -50,10 +50,9 @@
 %% @doc Creates a cursor using a specified connection to a database collection. If the cursor has 
 %%      to return a document containing nested documents, the connection parameters are used to 
 %%      read the nested documents.
--spec(cursor(mongo:cursor(), mongo:write_mode(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
-cursor(MongoCursor, WriteMode, ReadMode, Connection, Database, Collection) ->
-	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, WriteMode, ReadMode, Connection, 
-												Database, Collection, self()], []),
+-spec(cursor(mongo:cursor(), mongo:read_mode(),mongo:connection()|mongo:rs_connection(), mongo:db(),mongo:collection()) -> cursor()).
+cursor(MongoCursor, ReadMode, Connection, Database, Collection) ->
+	{ok, Pid} = gen_server:start_link(?MODULE, [MongoCursor, ReadMode, Connection, Database, Collection, self()], []),
 	Pid.
 
 %% @doc Returns the next record from the cursor or an empty tuple if no more documents
@@ -83,10 +82,10 @@ close(Cursor) ->
 %% Server functions
 
 %% @doc Initializes the cursor with a MongoDB cursor and connection parameters.
-init([MongoCursor, WriteMode, ReadMode, Connection, Database, Collection, Pid]) ->
+init([MongoCursor, ReadMode, Connection, Database, Collection, Pid]) ->
 	monitor(process, Pid),
-	{ok, #state{mongo_cursor=MongoCursor, write_mode=WriteMode, read_mode=ReadMode, connection=Connection, 
-				database = Database, collection=Collection, parent_process=Pid}, infinity}.
+	{ok, #state{mongo_cursor=MongoCursor, read_mode=ReadMode, connection=Connection, database = Database, 
+				collection=Collection, parent_process=Pid}, infinity}.
 
 %% @doc Responds to synchronous messages. Synchronous messages are sent to get the next record,
 %%      to get any remaining records, to get the mongo:cursor(), to close the cursor and to set
@@ -157,10 +156,9 @@ rest(State, Docs) ->
 construct_callback_function(State) ->
 	fun(Coll, Id) ->
 			ReadMode = State#state.read_mode,
-			WriteMode = State#state.write_mode,
 			Connection = State#state.connection,
 			Database = State#state.database,
-			{ok, Res} = mongo:do(WriteMode, ReadMode, Connection, Database,
+			{ok, Res} = mongo:do(safe, ReadMode, Connection, Database,
 								 fun() ->
 										 {Reference} = mongo:find_one(Coll, {'_id', Id}),
 										 Reference
