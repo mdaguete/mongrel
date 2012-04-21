@@ -22,6 +22,9 @@
 
 -behaviour(gen_server).
 
+%% Includes
+-include("mongrel_macros.hrl").
+
 %% API
 -export([count/1,
 		 count/2,
@@ -49,9 +52,6 @@
 		 handle_info/2, 
 		 terminate/2, 
 		 code_change/3]).
-
-%% Records
--record(state, {write_mode, read_mode, connection, database}).
 
 %% Types
 -type(action() :: fun()).
@@ -122,10 +122,9 @@ find(SelectorRecord, ProjectorRecord, Skip, BatchSize) ->
 	{Collection, Selector} = mongrel_mapper:map_selector(SelectorRecord),
 	Projector = mongrel_mapper:map_projection(ProjectorRecord),
 	MongoCursor = mongo:find(Collection, Selector, Projector, Skip, BatchSize),
-	ReadMode = get(read_mode),
-	Connection = get(connection),
-	Database = get(database),
-	mongrel_cursor:cursor(MongoCursor, ReadMode, Connection, Database, Collection).
+	MongrelState = get(mongrel_state),
+	mongrel_cursor:cursor(MongoCursor, MongrelState#mongrel_state.read_mode,  MongrelState#mongrel_state.connection, 
+						  MongrelState#mongrel_state.database, Collection).
 
 %% @doc Finds the first document that matches a selector and returns the document as a record.
 -spec(find_one(record()) -> record()|{}).
@@ -215,39 +214,38 @@ save(Record) ->
 %% @doc Initializes the server with a write mode, read mode, a connection and database.
 %%      The parameters are stored in the process dictionary so that they can be used
 %%      if a connection is needed by a cursor to access collections.
--spec(init([{mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db()}]) -> {ok, State::#state{}}).
+-spec(init([{mongo:write_mode(), mongo:read_mode(), mongo:connection()|mongo:rs_connection(), mongo:db()}]) -> {ok, State::#mongrel_state{}}).
 init([{WriteMode, ReadMode, Connection, Database}] = _ConnectionParameters) ->
-    {ok, #state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database}}.
+    {ok, #mongrel_state{write_mode=WriteMode, read_mode=ReadMode, connection=Connection, database=Database}}.
 
 %% @doc Responds synchronously to server calls.  The action of the do/5 function is executed by
 %%      this function. The process is stopped after this call.
--spec(handle_call({do, action()}, pid(), #state{}) -> {stop, normal, any(), #state{}}).
+-spec(handle_call({do, action()}, pid(), #mongrel_state{}) -> {stop, normal, any(), #mongrel_state{}}).
 handle_call({do, Action}=_Request, _From, State) ->
-    Reply = mongo:do(State#state.write_mode, State#state.read_mode, State#state.connection, State#state.database,
+    Reply = mongo:do(State#mongrel_state.write_mode, State#mongrel_state.read_mode, State#mongrel_state.connection, 
+					 State#mongrel_state.database,
 					 fun() ->
-							 put(read_mode, State#state.read_mode),
-							 put(connection, State#state.connection),
-							 put(database, State#state.database),
+							 put(mongrel_state, State),
 							 Action()
 					 end),
     {stop, normal, Reply, State}.
 
 %% @doc Responds asynchronously to messages. The server ignores any asynchronous messages.
--spec(handle_cast(any(), State::#state{}) -> {noreply, State::#state{}}).
+-spec(handle_cast(any(), State::#mongrel_state{}) -> {noreply, State::#mongrel_state{}}).
 handle_cast(_Message, State) ->
 	{noreply, State}.
 
 %% @doc Responds to out-of-band messages. The server ignores any such messages.
--spec(handle_info(any(), State::#state{}) -> {noreply, State::#state{}}).
+-spec(handle_info(any(), State::#mongrel_state{}) -> {noreply, State::#mongrel_state{}}).
 handle_info(_Info, State) ->
 	{noreply, State}.
 
 %% @doc Handles the shutdown of the server.
--spec(terminate(any(), #state{}) -> ok).
+-spec(terminate(any(), #mongrel_state{}) -> ok).
 terminate(_Reason, _State) ->
 	ok.
 
 %% @doc Responds to code changes. Any code changes are ignored (the server's state is unchanged).
--spec(code_change(any(), State::#state{}, any()) -> {ok, State::#state{}}).
+-spec(code_change(any(), State::#mongrel_state{}, any()) -> {ok, State::#mongrel_state{}}).
 code_change(_OldVersion, State, _Extra) ->
 	{ok, State}.

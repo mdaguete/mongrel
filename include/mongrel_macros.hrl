@@ -29,3 +29,5 @@
 -define(TYPE_REF, '#type').
 
 -define(ID_REF, '#id').
+
+-record(mongrel_state, {database, connection, write_mode, read_mode}).
