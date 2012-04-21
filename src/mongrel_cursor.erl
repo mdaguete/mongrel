@@ -121,7 +121,7 @@ handle_call({set_timeout, Timeout}, _From, State) ->
 %% @doc Responds asynchronously to messages. Asynchronous messages are ignored.
 -spec(handle_cast(any(), State::record()) -> {noreply, State::record()}).
 handle_cast(_Message, State) ->
-	{noreply, State}.
+	{noreply, State, State#state.timeout}.
 
 %% @doc Responds to non-OTP messages. The messages that are handled are a timeout and the
 %%      the termination of the parent process.
@@ -131,7 +131,7 @@ handle_info({'DOWN', _Ref, process, Pid, _Reason}, State) when Pid =:= State#sta
 handle_info(timeout, State) ->
 	{stop, normal, State};
 handle_info(_Info, State) ->
-	{noreply, State}.
+	{noreply, State, State#state.timeout}.
 
 %% @doc Handles the shutdown of the server.
 -spec(terminate(any(), record()) -> ok).
