@@ -36,6 +36,7 @@
 		 cursor/3,
 		 next/1,
 		 rest/1,
+		 take/2,
 		 get_mongo_cursor/1,
 		 set_timeout/2]).
 
@@ -76,6 +77,11 @@ next(Cursor) ->
 -spec(rest(cursor()) -> list(record())).
 rest(Cursor) ->
 	gen_server:call(Cursor, rest, infinity).
+
+%% @doc Returns a list of records referenced by a cursor up to a specified limit.
+-spec(take(integer(), cursor()) -> list(record())).
+take(Limit, Cursor) when Limit >= 0 ->
+	gen_server:call(Cursor, {take, Limit}, infinity).
 
 %% @doc Returns the mongo:cursor() used by a mongrel:cursor(). Using the mongo:cursor() can
 %%      be significantly faster than the mongrel:cursor() since it returns documents
@@ -119,6 +125,9 @@ handle_call(next, _From, State) ->
 	end;
 handle_call(rest, _From, State) ->
 	Docs = rest(State, []),
+	{stop, normal, Docs, State};
+handle_call({take, Limit}, _From, State) ->
+	Docs = take(State, Limit, []),
 	{stop, normal, Docs, State};
 handle_call(get_mongo_cursor, _From, State) ->
 	{reply, State#state.mongo_cursor, State, State#state.timeout};
@@ -168,6 +177,21 @@ rest(State, Docs) ->
 			Collection = State#state.collection,
 			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunction),
 			rest(State, Docs ++ [Record])
+	end.
+
+% Reads documents from a cursor up to a limit and returns them as a list of records.
+take(_State, 0, Docs) ->
+	Docs;
+take(State, Limit, Docs) ->
+	MongoCursor = State#state.mongo_cursor,
+	case mongo_cursor:next(MongoCursor) of
+		{} ->
+			Docs;
+		{Doc} ->
+			CallbackFunction = construct_callback_function(State),
+			Collection = State#state.collection,
+			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunction),
+			take(State, Limit-1, Docs ++ [Record])
 	end.
 
 % Creates a function that uses connection settings to read nested documents
