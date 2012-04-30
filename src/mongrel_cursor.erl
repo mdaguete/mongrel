@@ -171,27 +171,27 @@ rest(State, Docs) ->
 	MongoCursor = State#state.mongo_cursor,
 	case mongo_cursor:next(MongoCursor) of
 		{} ->
-			Docs;
+			lists:reverse(Docs);
 		{Doc} ->
 			CallbackFunction = construct_callback_function(State),
 			Collection = State#state.collection,
 			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunction),
-			rest(State, Docs ++ [Record])
+			rest(State, [Record|Docs])
 	end.
 
 % Reads documents from a cursor up to a limit and returns them as a list of records.
 take(_State, 0, Docs) ->
-	Docs;
+	lists:reverse(Docs);
 take(State, Limit, Docs) ->
 	MongoCursor = State#state.mongo_cursor,
 	case mongo_cursor:next(MongoCursor) of
 		{} ->
-			Docs;
+			lists:reverse(Docs);
 		{Doc} ->
 			CallbackFunction = construct_callback_function(State),
 			Collection = State#state.collection,
 			Record = mongrel_mapper:unmap(Collection, Doc, CallbackFunction),
-			take(State, Limit-1, Docs ++ [Record])
+			take(State, Limit-1, [Record|Docs])
 	end.
 
 % Creates a function that uses connection settings to read nested documents
